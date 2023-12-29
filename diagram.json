@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 77.4, "left": -211.8, "attrs": {} },
+    {
+      "type": "wokwi-a4988",
+      "id": "AltDriver",
+      "top": 139.4,
+      "left": 235.6,
+      "rotate": 270,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-a4988",
+      "id": "AzDriver",
+      "top": 129.8,
+      "left": 466,
+      "rotate": 270,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-stepper-motor",
+      "id": "AltStepper",
+      "top": -187.49,
+      "left": 144.88,
+      "attrs": { "display": "angle", "arrow": "green" }
+    },
+    {
+      "type": "wokwi-stepper-motor",
+      "id": "AzStepper",
+      "top": -187.49,
+      "left": 384.88,
+      "attrs": { "display": "angle", "arrow": "blue" }
+    },
+    {
+      "type": "wokwi-microsd-card",
+      "id": "sd1",
+      "top": -179.83,
+      "left": -156.53,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ir-receiver",
+      "id": "ir",
+      "top": 363.45,
+      "left": -241.78,
+      "attrs": { "color": "green" }
+    },
+    { "type": "wokwi-ir-remote", "id": "remote1", "top": 288, "left": 432, "attrs": {} },
+    { "type": "wokwi-lcd1602", "id": "lcd", "top": 272.23, "left": 102.4, "attrs": {} },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 484.8,
+      "left": 239.45,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    }
+  ],
+  "connections": [
+    [ "AltDriver:1B", "AltStepper:B-", "black", [ "v0" ] ],
+    [ "AltDriver:1A", "AltStepper:B+", "green", [ "v0" ] ],
+    [ "AltStepper:A+", "AltDriver:2A", "blue", [ "v0" ] ],
+    [ "AltStepper:A-", "AltDriver:2B", "red", [ "v0" ] ],
+    [ "AzDriver:1B", "AzStepper:B-", "black", [ "v0" ] ],
+    [ "AzDriver:1A", "AzStepper:B+", "green", [ "v0" ] ],
+    [ "AzStepper:A+", "AzDriver:2A", "blue", [ "v0" ] ],
+    [ "AzStepper:A-", "AzDriver:2B", "red", [ "v0" ] ],
+    [ "sd1:SCK", "uno:13", "green", [ "v18", "h-31" ] ],
+    [ "sd1:GND", "uno:GND.1", "black", [ "v21", "h-48" ] ],
+    [ "sd1:DO", "uno:12", "green", [ "v24", "h-42" ] ],
+    [ "sd1:DI", "uno:11", "green", [ "v14", "h6" ] ],
+    [ "sd1:CS", "uno:10", "green", [ "v7", "h21" ] ],
+    [ "uno:5V", "sd1:VCC", "red", [ "v47.9", "h61.4", "v-345.6", "h-134.26" ] ],
+    [ "uno:GND.1", "ir:GND", "black", [ "v-28.8", "h-191.7", "v432" ] ],
+    [ "uno:5V", "ir:VCC", "red", [ "v76.7", "h-82.6", "v163.2", "h38.4" ] ],
+    [ "uno:5", "ir:DAT", "green", [ "v-57.6", "h-360.7", "v451.2", "h162.9" ] ],
+    [ "AltDriver:STEP", "uno:6", "cyan", [ "v-124.8", "h-234.5" ] ],
+    [ "AltDriver:DIR", "uno:7", "magenta", [ "v-134.4", "h-253.6" ] ],
+    [ "AzDriver:STEP", "uno:8", "cyan", [ "v-144", "h-493.5" ] ],
+    [ "AzDriver:DIR", "uno:9", "magenta", [ "v-153.6", "h-512.6" ] ],
+    [ "uno:GND.2", "lcd:VSS", "limegreen", [ "v201.5", "h176.7" ] ],
+    [ "uno:GND.2", "lcd:K", "black", [ "v307.1", "h320.7" ] ],
+    [ "uno:GND.2", "lcd:RW", "black", [ "v239.9", "h215.2" ] ],
+    [ "uno:5V", "lcd:VDD", "red", [ "v220.7", "h195.7" ] ],
+    [ "uno:5V", "r1:2", "red", [ "v16", "h23", "v281.5", "h307.2" ] ],
+    [ "r1:1", "lcd:A", "pink", [ "h0.55", "v-8.2", "h-19.35" ] ],
+    [ "uno:A5", "lcd:RS", "blue", [ "v230.3", "h119.2" ] ],
+    [ "uno:A4", "lcd:E", "purple", [ "v249.5", "h148.2" ] ],
+    [ "uno:A3", "lcd:D4", "green", [ "v259.1", "h205.7" ] ],
+    [ "uno:A2", "lcd:D5", "brown", [ "v268.7", "h224.7" ] ],
+    [ "uno:A1", "lcd:D6", "gold", [ "v278.3", "h243.7" ] ],
+    [ "uno:A0", "lcd:D7", "gray", [ "v287.9", "h262.7" ] ]
+  ],
+  "dependencies": {}
+}

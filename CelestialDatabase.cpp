@@ -1,0 +1,207 @@
+#include "Arduino.h"
+#include "CelestialDatabase.h"
+
+#include "SkyMap.h"
+
+const double CelestialGotoObject::i[] = { 0.0, 7.0052, 3.3949, 0.0, 1.8496, 1.3033, 2.4869, 0.7728, 1.7692, 17.1695 };
+const double CelestialGotoObject::o[] = { 0.0, 48.493, 76.804, 0.0, 49.668, 100.629, 113.732, 73.989, 131.946, 110.469 };
+const double CelestialGotoObject::p[] = { 0.0, 77.669, 131.99, 103.147, 336.322, 14.556, 91.500,  169.602, 6.152, 223.486 };
+const double CelestialGotoObject::a[] = { 0.0, 0.387098, 0.723327, 1.0000, 1.523762, 5.20245, 9.52450, 19.1882, 29.9987, 39.2766 };
+const double CelestialGotoObject::n[] = { 0.0, 4.09235, 1.60215, 0.985611, 0.523998, 0.083099, 0.033551, 0.011733, 0.006002, 0.004006 };
+const double CelestialGotoObject::e[] = { 0.0, 0.205645 , 0.006769, 0.016679, 0.093346, 0.048892, 0.055724, 0.047874, 0.009816, 0.246211 };
+const double CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9625, 87.9728, 216.6279, 11.9756, 335.0233, 258.8717 };
+
+// planetary prediction from https://github.com/samhita-ganguly/Real-Time-Planet-Tracking-System-and-Trajectory-Prediction
+
+
+CelestialGotoObject* CelestialDatabase::getCelestialGotoObject(String identifier)
+{
+  bool isPlanet = true;
+  if (isPlanet)
+  {
+    CelestialGotoObject* obj = new CelestialGotoObject("Mars");
+    obj->isPlanet = true;
+
+    return obj;
+  }
+  else{
+    // read from SD card
+    CelestialGotoObject* obj = new CelestialGotoObject("M 33");
+    obj->RA_hour = 1;
+    obj->RA_minute = 33.51;
+    obj->DEC_hour = 30;
+    obj->DEC_minute = 39;
+    isPlanet = false;
+    return obj;
+  }
+  return 0;
+}
+     
+CelestialGotoObject::CelestialGotoObject(const char* _name) : name(_name)
+{
+    pi = 4 * atan(1);
+    c_rads = (4 * atan(1) / 180);
+    c_degs = 180 / (4 * atan(1));
+}
+
+AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
+{
+  //Serial.println(currTime);
+  AltAzPosition psn;
+  if (isPlanet)
+  {
+    dfrac = (hh + (mm / 60.0)) / 24.0;
+    Serial.print("dfrac ");
+    Serial.println(dfrac);
+    daynumber = dayno(myDay, myMonth, myYear, dfrac);
+    Serial.println(daynumber,6);
+    earth();
+    int j=4;   // TODO set to planet num
+
+    M = (n[j] * c_rads * (daynumber)) + (L[j] - p[j]) * c_rads;
+
+    M = frange(M);
+    v = fkep(M, e[j]);
+
+    r = a[j] * ((1 - pow(e[j], 2)) / (1 + (e[j] * cos(v))));
+    x = r * (cos(o[j] * c_rads) * cos(v + p[j] * c_rads - o[j] * c_rads) - sin(o[j] * c_rads) * sin(v + p[j] * c_rads - o[j] * c_rads) * cos(i[j] * c_rads));
+    y = r * (sin(o[j] * c_rads) * cos(v + p[j] * c_rads - o[j] * c_rads) + cos(o[j] * c_rads) * sin(v + p[j] * c_rads - o[j] * c_rads) * cos(i[j] * c_rads));
+    z = r * (sin(v + p[j] * c_rads - o[j] * c_rads)) * sin(i[j] * c_rads);
+    X = x - x_e;
+    Y = y - y_e;
+    Z = z;
+
+    double ec = 23.439292 * c_rads;
+    Xq = X;
+    Yq = (Y * cos(ec)) - (Z * sin(ec));
+    Zq = (Y * sin(ec)) + (Z * cos(ec));
+
+    //Serial.println("Heliocentric coordinates of planet : ");
+    
+    Serial.print(x_e,6);
+    Serial.print(",");
+    Serial.println(y_e,6);
+
+    Serial.print(x,6);
+    Serial.print(",");
+    Serial.print(y,6);
+    Serial.print(",");
+    Serial.println(z,6);
+    
+    Serial.print(Xq,6);
+    Serial.print(",");
+    Serial.print(Yq,6);
+    Serial.print(",");
+    Serial.println(Zq,6);
+
+    ra = fnatan(Xq, Yq);
+    dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
+
+    Serial.println("ra: " + String(ra) + "  dec: " + String(dec));
+    double alpha = FNdegmin((ra * c_degs) / 15);
+    double delta = FNdegmin(dec * c_degs);
+    Serial.println("ra: " + String(alpha) + "  dec: " + String(delta));
+    RA_hour = (int)ra;
+    RA_minute = (ra - (int)ra) * 60;
+    DEC_hour = (int)dec;
+    DEC_minute = (dec - (int)dec) * 60;
+
+  }
+  
+  ObserverPosition observation_location{ mylatitude , mylongitude }; 
+  DateTimeValues dt{ myYear, myMonth, myDay, hh };  
+  Star me{ RA_hour + 60/RA_minute ,DEC_hour + 60/DEC_minute }; 
+  SearchResult search_result{};   
+  
+  Skymap.update(observation_location, me, dt);
+  search_result = Skymap.get_search_result();
+  psn.alt = search_result.GetAltitude();
+  psn.az = search_result.GetAzimuth();   
+  
+  //Serial.println("alt: " + String(psn.alt) + "  az: " + String(psn.az));
+  return psn; 
+}
+
+double CelestialGotoObject::FNdegmin(double xx)
+{
+    double a = (double)(int)(xx);
+    double b = xx - a;
+    double e = (double)(int)(60 * b);
+    //   deal with carry on minutes
+    if (e >= 60)
+    {
+        e = 0;
+        a = a + 1;
+    }
+    return (a + (e / 100));
+}
+
+double CelestialGotoObject::dayno(int dx, int mx, int yx, double fx)
+{
+  Serial.print(dx);
+  Serial.print(" ");
+  Serial.print(mx);
+  Serial.print(" ");
+  Serial.println(yx);
+ 
+//    dno = (367 * yx) - (int)(7 * (yx + (int)((mx + 9) / 12)) / 4) + (int)(275 * mx / 9) + dx - 730531.5 + fx;
+//    dno -= 4975.5;
+
+    dno = (367.0 * yx) - (int)(7.0 * (yx + (int)((mx + 9.0) / 12.0)) / 4.0) + (int)(275.0 * mx / 9.0) + dx - 730531.5 + fx;
+    Serial.println(dno);
+    dno -= 4975.5;
+    Serial.print("day no ");
+    Serial.println(dno);
+    return dno;
+}
+
+double CelestialGotoObject::frange(double x)
+{
+    x = x / (2 * pi);
+    x = (2 * pi) * (x - (double)(int)(x));
+    if (x < 0)
+        x = x + (2 * pi);
+    return x;
+}
+
+double CelestialGotoObject::fkep(double m, double ecc)
+{
+    double e = ecc;
+
+    double v = m + (2 * e - 0.25 * pow(e, 3) + 5 / 96 * pow(e, 5)) * sin(m) + (1.25 * pow(e, 2) - 11 / 24 * pow(e, 4)) * sin(2 * m) + (13 / 12 * pow(e, 3) - 43 / 64 * pow(e, 5)) * sin(3 * m) + 103 / 96 * pow(e, 4) * sin(4 * m) + 1097 / 960 * pow(e, 5) * sin(5 * m);
+
+    if (v < 0)
+        v = v + (2 * pi);
+    return v;
+}
+double CelestialGotoObject::fnatan(double x, double y)
+{
+    double a = atan(y / x);
+    if (x < 0)
+        a = a + pi;
+    if ((y < 0) && (x > 0))
+        a = a + (2 * pi);
+    return a;
+}
+
+void CelestialGotoObject::earth()
+{
+    Serial.println("earth");
+    Serial.println(daynumber,6);
+    M_e = ((n[3] * c_rads) * (daynumber)) + (L[3] - p[3]) * c_rads;
+    //Serial.println(M_e,6);
+    M_e = frange(M_e);
+    //Serial.println(M_e,6);
+    v_e = fkep(M_e, e[3]);
+    //Serial.println(v_e,6);
+    r_e = a[3] * ((1 - (pow(e[3], 2))) / (1 + (e[3] * cos(v_e))));
+
+    //Serial.println(r_e,6);
+    x_e = r_e * cos(v_e + p[3] * c_rads);
+
+    //Serial.println(x_e,6);
+    y_e = r_e * sin(v_e + p[3] * c_rads);
+    //Serial.println(y_e,6);
+    z_e = 0;
+}
+
