@@ -9,29 +9,26 @@
 #include "devicetime.h"
 #include "CelestialDatabase.h"
 #include "IRremote.h"
-#include "AccelStepper.h"
+#include "motors.h"
 
 //                RS E  D4 D5  D6  D7
 LiquidCrystal lcd(5, 6, 7, 8, 9, 10);
 IRrecv irrecv(4);
 
-#define stepsPerRevolution 2038
-
-AccelStepper AzStepper(AccelStepper::DRIVER,14,15); // A0, A1 
-AccelStepper AltStepper(AccelStepper::DRIVER,16,16); // A2, A3
-
 int currentAction;
 CelestialDatabase cdb;
 String celestialObjectID = "";
 CelestialGotoObject targetObject;
-SkyPosition targetPosition;
-SkyPosition currentPosition;
+AltAzPosition targetPosition;
+AltAzPosition currentPosition;
+bool calibrating = false;
+stepperMotors motors;
 
 // status codes
- #define INACTIVE -1
- #define TRACKING 16
- //celestialObjectID complete, ready to look up
- #define LOOKUP 20 
+#define INACTIVE -1
+#define TRACKING 16
+//celestialObjectID complete, ready to look up
+#define LOOKUP 20 
 //object found, waiting confirmation to slew
 #define READYTOGO 21
 #define SLEWING 22
@@ -39,6 +36,7 @@ SkyPosition currentPosition;
 #define SETMINUTE 24
 #define SETSECONDS 25
 
+// image for play arrow
 byte rarrow[8] = {
   B10000,
   B11000,
@@ -51,22 +49,16 @@ byte rarrow[8] = {
 
 void setup() {
   Serial.begin(115200);
-  currentPosition.alt_ra = 0.0;
-  currentPosition.az_dec = 0.0;
-  targetPosition.alt_ra = 0.0;
-  targetPosition.az_dec = 0.0;
+  currentPosition.alt = 0.0;
+  currentPosition.az = 0.0;
+  targetPosition.alt = 0.0;
+  targetPosition.az = 0.0;
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
   irrecv.enableIRIn();
+  calibrating = false;
 
-  // position zero is alt = 90, az = latitude (so fork horiontal, tube at right angles)
-  AzStepper.setMaxSpeed(200.0);
-  AzStepper.setAcceleration(100.0);
-  AzStepper.setCurrentPosition(0);
-  
-  AzStepper.setMaxSpeed(300.0);
-  AzStepper.setAcceleration(100.0);
-  AzStepper.setCurrentPosition(0);
+
 }
 
 
@@ -88,114 +80,127 @@ int getNumberKey(int cmd)
 void loop() {
   
   while (irrecv.decode()) {
-      //Serial.println(irrecv.decodedIRData.command);
-      switch (irrecv.decodedIRData.command) {
-        case key_play:
-          if (currentAction == LOOKUP)
-          {
-            targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
-            currentAction = SLEWING;
+    //Serial.println(irrecv.decodedIRData.command);
+    switch (irrecv.decodedIRData.command) {
+      case key_play:
+        if (currentAction == LOOKUP)
+        {
+          targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
+          motors.setTarget(targetPosition.alt, targetPosition.az);
+          currentAction = SLEWING;
+        }
+        else {
+          lcd.clear();
+          lcd.print((currentAction == TRACKING) ? "stopped" : "tracking");
+          currentAction = (currentAction == TRACKING) ? INACTIVE : TRACKING;
+        }
+        break;
+      case key_up:
+        if (currentAction == SETHOUR) {
+            setDeviceTime(getHour()+1, getMinute(), getSeconds());
+            break;
           }
-          else {
-            lcd.clear();
-            lcd.print((currentAction == TRACKING) ? "stopped" : "tracking");
-            currentAction = (currentAction == TRACKING) ? INACTIVE : TRACKING;
-          }
-          break;
-        case key_up:
-          if (currentAction == SETHOUR) {
-              setDeviceTime(getHour()+1, getMinute(), getSeconds());
-              break;
-            }
 
+        if (currentAction == SETMINUTE) {
+            setDeviceTime(getHour(), getMinute()+1, getSeconds());
+            break;
+          }
+
+        if (currentAction == SETSECONDS) {
+            setDeviceTime(getHour(), getMinute(), getSeconds()+1);
+            break;
+          }
+      case key_down:
+        if (currentAction == SETHOUR) {
+            setDeviceTime(getHour()-1, getMinute(), getSeconds());
+            break;
+          }
           if (currentAction == SETMINUTE) {
-              setDeviceTime(getHour(), getMinute()+1, getSeconds());
-              break;
-            }
-
+            setDeviceTime(getHour(), getMinute()-1, getSeconds());
+            break;
+          }
           if (currentAction == SETSECONDS) {
-              setDeviceTime(getHour(), getMinute(), getSeconds()+1);
-              break;
-            }
-        case key_down:
-          if (currentAction == SETHOUR) {
-              setDeviceTime(getHour()-1, getMinute(), getSeconds());
-              break;
-            }
-            if (currentAction == SETMINUTE) {
-              setDeviceTime(getHour(), getMinute()-1, getSeconds());
-              break;
-            }
-            if (currentAction == SETSECONDS) {
-              setDeviceTime(getHour(), getMinute(), getSeconds()-1);
-              break;
-            }
-        case key_left:
-          if (currentAction == SETHOUR) { currentAction = -1; lcd.clear(); break; }
-          if (currentAction == SETMINUTE || currentAction == SETSECONDS) {
-            currentAction--;
+            setDeviceTime(getHour(), getMinute(), getSeconds()-1);
             break;
           }
-        case key_right:
-          if (currentAction == SETSECONDS) { currentAction = -1; lcd.clear(); break; }
-          if (currentAction == SETHOUR || currentAction == SETMINUTE) {
-            currentAction++;
-            break;
-          }
-          lcd.clear();
-          lcd.print("moving");
-          currentAction = irrecv.decodedIRData.command;
+      case key_left:
+        if (currentAction == SETHOUR) { currentAction = -1; lcd.clear(); break; }
+        if (currentAction == SETMINUTE || currentAction == SETSECONDS) {
+          currentAction--;
           break;
-        case key_back:
-          // delete celestialObjectID character
-          if (celestialObjectID.length() > 0) celestialObjectID = celestialObjectID.substring(0,celestialObjectID.length()-1);
-          lcd.clear();
-          lcd.print(celestialObjectID);
+        }
+      case key_right:
+        if (currentAction == SETSECONDS) { currentAction = -1; lcd.clear(); break; }
+        if (currentAction == SETHOUR || currentAction == SETMINUTE) {
+          currentAction++;
           break;
-        case key_menu:
+        }
+        lcd.clear();
+        lcd.print("moving");
+        currentAction = irrecv.decodedIRData.command;
+        break;
+      case key_back:
+        // delete celestialObjectID character
+        if (celestialObjectID.length() > 0) celestialObjectID = celestialObjectID.substring(0,celestialObjectID.length()-1);
+        lcd.clear();
+        lcd.print(celestialObjectID);
+        break;
+      case key_menu:
+        lcd.clear();
+        lcd.print(getTimeString());
+        currentAction = SETHOUR;
+        break;
+      case key_calibrate:
+        if (calibrating) {
+          calibrating = false;
           lcd.clear();
-          lcd.print(getTimeString());
-          currentAction = SETHOUR;
-          break;
-        default:
-          if (getNumberKey(irrecv.decodedIRData.command) > -1) 
-              {
-                celestialObjectID.concat(getNumberKey(irrecv.decodedIRData.command));
+          lcd.print("Calibrating mode off");
+        }
+        else {
+          calibrating = true;
+          lcd.clear();
+          lcd.print("Calibrating mode on");
+        }
+        break;
+      default:
+        if (getNumberKey(irrecv.decodedIRData.command) > -1) 
+            {
+              celestialObjectID.concat(getNumberKey(irrecv.decodedIRData.command));
+              lcd.clear();
+              lcd.print(celestialObjectID);
+              if (celestialObjectID.length() == 4) {
                 lcd.clear();
-                lcd.print(celestialObjectID);
-                if (celestialObjectID.length() == 4) {
-                  lcd.clear();
-                  if (cdb.FindCelestialGotoObject(celestialObjectID, &targetObject))
+                if (cdb.FindCelestialGotoObject(celestialObjectID, &targetObject))
+                {
+                  if (!targetObject.isAboveHorizon(getHour(), getMinute()))
                   {
-                    if (!targetObject.isAboveHorizon(getHour(), getMinute()))
-                    {
-                      lcd.print("error - object");
-                      lcd.setCursor(0,1);
-                      lcd.print("below horizon");
-                      currentAction = INACTIVE;
-                    }
-                    else {
-                      lcd.print(targetObject.name);
-                      lcd.setCursor(0,1);
-                      lcd.write(byte(0));
-                      lcd.print(" or C to cancel");
-                      currentAction = LOOKUP;
-                    }
-                  }
-                  else
-                  {
-                    lcd.print("error finding");
+                    lcd.print("error - object");
                     lcd.setCursor(0,1);
-                    lcd.print("object " + celestialObjectID);
-                    celestialObjectID = "";
+                    lcd.print("below horizon");
                     currentAction = INACTIVE;
-                  } 
+                  }
+                  else {
+                    lcd.print(targetObject.name);
+                    lcd.setCursor(0,1);
+                    lcd.write(byte(0));
+                    lcd.print(" or C to cancel");
+                    currentAction = LOOKUP;
+                  }
                 }
+                else
+                {
+                  lcd.print("error finding");
+                  lcd.setCursor(0,1);
+                  lcd.print("object " + celestialObjectID);
+                  celestialObjectID = "";
+                  currentAction = INACTIVE;
+                } 
               }
-          break;
-      }
-      // slight delay to avoid unintentional duplicate key presses
-      delay(100);
+            }
+        break;
+    }
+    // slight delay to avoid unintentional duplicate key presses
+    delay(100);
     irrecv.resume();
   }
 
@@ -209,15 +214,25 @@ void loop() {
       break;
     case SLEWING:
       // slewing to object
+      if (motors.completedSlew()) currentAction = INACTIVE;
       break;
+    // manual move
     case key_up:
+      motors.Move(10,0,calibrating); // alt az cal
+      break;
     case key_down:
+      motors.Move(-10,0,calibrating);
+      break;
     case key_left:
+      motors.Move(0,-10,calibrating);
+      break;
     case key_right:
-      // manual move
+      motors.Move(0,10,calibrating);
       break;
     case TRACKING:
       // tracking
+      targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
+      motors.setTarget(targetPosition.alt, targetPosition.az);
       break;
     case SETHOUR:
     case SETMINUTE:

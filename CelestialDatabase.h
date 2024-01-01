@@ -4,18 +4,21 @@
 // Celestial Database
 #include "Arduino.h"
 
-struct SkyPosition
+struct AltAzPosition
 {
-  // stupid naming, but useful to reuse structure
-  double alt_ra;
-  double az_dec;  
+  double alt;
+  double az;  
 };
-
+struct RaDecPosition
+{
+  double ra;
+  double dec;  
+};
 class CelestialGotoObject {
   public:
     CelestialGotoObject();
-    SkyPosition getCurrentAltAzPosition(int hour, int minute);
-    SkyPosition getRaDec(int hour, int minute);
+    AltAzPosition getCurrentAltAzPosition(int hour, int minute);
+    RaDecPosition getRaDec(int hour, int minute);
     bool isAboveHorizon(int hour, int minute);
 
     bool isValid;
@@ -31,7 +34,7 @@ class CelestialGotoObject {
 
     int RA_hour;
     int RA_minute;
-    int decSign;
+    //int decSign;
     int DEC_hour;
     int DEC_minute;
 

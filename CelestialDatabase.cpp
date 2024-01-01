@@ -29,28 +29,28 @@ CelestialGotoObject::CelestialGotoObject()
 }
 
 
-SkyPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
+AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
 {
-  SkyPosition psn = getRaDec(hh, mm);
-  Star me(psn.alt_ra * 15.0, psn.az_dec); // dec converted to degrees
+  RaDecPosition radecpsn = getRaDec(hh, mm);
+  Star me(radecpsn.ra * 15.0, radecpsn.dec); // dec converted to degrees
   Skymap.DateTime(myYear, myMonth, myDay, hh);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
   Skymap.Calculate_all();
-
-  psn.alt_ra = Skymap.get_star_Altitude();
-  psn.az_dec = Skymap.get_star_Azimuth();
+  AltAzPosition psn;
+  psn.alt = Skymap.get_star_Altitude();
+  psn.az = Skymap.get_star_Azimuth();
   return psn;
 }
 
-SkyPosition CelestialGotoObject::getRaDec(int hh, int mm)
+RaDecPosition CelestialGotoObject::getRaDec(int hh, int mm)
 {
   //Serial.println(currTime);
-  SkyPosition psn;
+  RaDecPosition psn;
   if (!isPlanet)
   {
-    psn.alt_ra = (RA_hour < 0) ? RA_hour - RA_minute/60.0 : RA_hour + RA_minute/60.0;
-    psn.az_dec = (DEC_hour < 0) ? DEC_hour - DEC_minute/60.0 : DEC_hour + DEC_minute/60.0; 
+    psn.ra = (RA_hour < 0) ? RA_hour - RA_minute/60.0 : RA_hour + RA_minute/60.0;
+    psn.dec = (DEC_hour < 0) ? DEC_hour - DEC_minute/60.0 : DEC_hour + DEC_minute/60.0; 
   } 
   else {
     dfrac = (hh + (mm / 60.0)) / 24.0;
@@ -97,8 +97,8 @@ SkyPosition CelestialGotoObject::getRaDec(int hh, int mm)
     Serial.print(",");
     Serial.println(Zq,6);
 #endif
-    psn.alt_ra = fnatan(Xq, Yq);
-    psn.az_dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
+    psn.ra = fnatan(Xq, Yq);
+    psn.dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
   }
   
   //Serial.println("alt: " + String(psn.alt) + "  az: " + String(psn.az));
@@ -107,8 +107,8 @@ SkyPosition CelestialGotoObject::getRaDec(int hh, int mm)
 
 bool CelestialGotoObject::isAboveHorizon(int hh, int mm)
 {
-  SkyPosition psn = getRaDec(hh, mm);
-  Star me(psn.alt_ra * 15.0, psn.az_dec); // dec converted to degrees
+  RaDecPosition psn = getRaDec(hh, mm);
+  Star me(psn.ra * 15.0, psn.dec); // dec converted to degrees
   Skymap.DateTime(myYear, myMonth, myDay, hh);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
