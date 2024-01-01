@@ -16,34 +16,16 @@ void setDeviceTime(unsigned long _h, unsigned long _m, unsigned long _s)
 int getHour() 
 {
   return ((((millis() + timeoffset) / 1000) / 60) / 60) % 24;
-
-  //unsigned long currentMillis = millis() + timeoffset;
-  //unsigned long seconds = currentMillis / 1000;
-  //unsigned long minutes = seconds / 60;
-  //unsigned long hours = minutes / 60;
-
-  //return hours %= 24;
 }
 
 int getMinute()
 {
   return (((millis() + timeoffset) / 1000) / 60) % 60;
-
-  //unsigned long currentMillis = millis() + timeoffset;
-  //unsigned long seconds = currentMillis / 1000;
-  //unsigned long minutes = seconds / 60;
-
-  //return minutes %= 60;
 }
 
 int getSeconds()
 {
   return ((millis() + timeoffset) / 1000) % 60;
-
-  //unsigned long currentMillis = millis() + timeoffset;
-  //unsigned long seconds = currentMillis / 1000;
-
-  //return seconds %= 60;
 }
 
 String getTimeString()

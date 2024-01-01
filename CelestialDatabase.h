@@ -4,17 +4,21 @@
 // Celestial Database
 #include "Arduino.h"
 
-class AltAzPosition {
-  public:
-    double alt;
-    double az;
+struct SkyPosition
+{
+  // stupid naming, but useful to reuse structure
+  double alt_ra;
+  double az_dec;  
 };
 
 class CelestialGotoObject {
   public:
-    CelestialGotoObject(const char* _name);
-    AltAzPosition getCurrentAltAzPosition(int hour, int minute);
+    CelestialGotoObject();
+    SkyPosition getCurrentAltAzPosition(int hour, int minute);
+    SkyPosition getRaDec(int hour, int minute);
+    bool isAboveHorizon(int hour, int minute);
 
+    bool isValid;
     double FNdegmin(double xx);
     double dayno(int dx, int mx, int yx, double fx);
     double frange(double x);
@@ -53,17 +57,16 @@ private:
 
     double mylatitude = 52.6027972;
     double mylongitude = -3.0954659;
-    int myYear = 2023;
-    int myMonth = 12;
-    int myDay = 29;
+    double myYear = 2024;
+    double myMonth = 1;
+    double myDay = 1;
 };
   
 class CelestialDatabase 
 {
   public:
 
-    CelestialGotoObject* getCelestialGotoObject(String id); 
-
+    bool FindCelestialGotoObject(String ID, CelestialGotoObject* obj); 
 };
 
 #endif // celestialdatabase_h

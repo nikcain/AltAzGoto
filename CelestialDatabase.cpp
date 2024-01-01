@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "CelestialDatabase.h"
-
+#include "readfile.h"
 #include "SkyMap.h"
 
 const double CelestialGotoObject::i[] = { 0.0, 7.0052, 3.3949, 0.0, 1.8496, 1.3033, 2.4869, 0.7728, 1.7692, 17.1695 };
@@ -13,48 +13,51 @@ const double CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9
 
 // planetary prediction from https://github.com/samhita-ganguly/Real-Time-Planet-Tracking-System-and-Trajectory-Prediction
 
-
-CelestialGotoObject* CelestialDatabase::getCelestialGotoObject(String identifier)
+bool CelestialDatabase::FindCelestialGotoObject(String ID, CelestialGotoObject* obj)
 {
-  bool isPlanet = true;
-  if (isPlanet)
-  {
-    CelestialGotoObject* obj = new CelestialGotoObject("Mars");
-    obj->isPlanet = true;
+  if (!FindCelestialObjectRecord(ID, obj)) return false;
 
-    return obj;
-  }
-  else{
-    // read from SD card
-    CelestialGotoObject* obj = new CelestialGotoObject("M 33");
-    obj->RA_hour = 1;
-    obj->RA_minute = 33.51;
-    obj->DEC_hour = 30;
-    obj->DEC_minute = 39;
-    isPlanet = false;
-    return obj;
-  }
-  return 0;
+  return true;
 }
      
-CelestialGotoObject::CelestialGotoObject(const char* _name) : name(_name)
+CelestialGotoObject::CelestialGotoObject()
 {
-    pi = 4 * atan(1);
-    c_rads = (4 * atan(1) / 180);
-    c_degs = 180 / (4 * atan(1));
+  isValid = false;
+  pi = 4 * atan(1);
+  c_rads = (4 * atan(1) / 180);
+  c_degs = 180 / (4 * atan(1));
 }
 
-AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
+
+SkyPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
+{
+  SkyPosition psn = getRaDec(hh, mm);
+  Star me(psn.alt_ra * 15.0, psn.az_dec); // dec converted to degrees
+  Skymap.DateTime(myYear, myMonth, myDay, hh);
+  Skymap.my_location(mylatitude , mylongitude);
+  Skymap.star_ra_dec(me);
+  Skymap.Calculate_all();
+
+  psn.alt_ra = Skymap.get_star_Altitude();
+  psn.az_dec = Skymap.get_star_Azimuth();
+  return psn;
+}
+
+SkyPosition CelestialGotoObject::getRaDec(int hh, int mm)
 {
   //Serial.println(currTime);
-  AltAzPosition psn;
-  if (isPlanet)
+  SkyPosition psn;
+  if (!isPlanet)
   {
+    psn.alt_ra = (RA_hour < 0) ? RA_hour - RA_minute/60.0 : RA_hour + RA_minute/60.0;
+    psn.az_dec = (DEC_hour < 0) ? DEC_hour - DEC_minute/60.0 : DEC_hour + DEC_minute/60.0; 
+  } 
+  else {
     dfrac = (hh + (mm / 60.0)) / 24.0;
-    Serial.print("dfrac ");
-    Serial.println(dfrac);
+    //Serial.print(F"dfrac ");
+    //Serial.println(dfrac);
     daynumber = dayno(myDay, myMonth, myYear, dfrac);
-    Serial.println(daynumber,6);
+    //Serial.println(daynumber,6);
     earth();
     int j=4;   // TODO set to planet num
 
@@ -75,7 +78,7 @@ AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
     Xq = X;
     Yq = (Y * cos(ec)) - (Z * sin(ec));
     Zq = (Y * sin(ec)) + (Z * cos(ec));
-
+#if DEBUG
     //Serial.println("Heliocentric coordinates of planet : ");
     
     Serial.print(x_e,6);
@@ -93,33 +96,25 @@ AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
     Serial.print(Yq,6);
     Serial.print(",");
     Serial.println(Zq,6);
-
-    ra = fnatan(Xq, Yq);
-    dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
-
-    Serial.println("ra: " + String(ra) + "  dec: " + String(dec));
-    double alpha = FNdegmin((ra * c_degs) / 15);
-    double delta = FNdegmin(dec * c_degs);
-    Serial.println("ra: " + String(alpha) + "  dec: " + String(delta));
-    RA_hour = (int)ra;
-    RA_minute = (ra - (int)ra) * 60;
-    DEC_hour = (int)dec;
-    DEC_minute = (dec - (int)dec) * 60;
-
+#endif
+    psn.alt_ra = fnatan(Xq, Yq);
+    psn.az_dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
   }
-  
-  ObserverPosition observation_location{ mylatitude , mylongitude }; 
-  DateTimeValues dt{ myYear, myMonth, myDay, hh };  
-  Star me{ RA_hour + 60/RA_minute ,DEC_hour + 60/DEC_minute }; 
-  SearchResult search_result{};   
-  
-  Skymap.update(observation_location, me, dt);
-  search_result = Skymap.get_search_result();
-  psn.alt = search_result.GetAltitude();
-  psn.az = search_result.GetAzimuth();   
   
   //Serial.println("alt: " + String(psn.alt) + "  az: " + String(psn.az));
   return psn; 
+}
+
+bool CelestialGotoObject::isAboveHorizon(int hh, int mm)
+{
+  SkyPosition psn = getRaDec(hh, mm);
+  Star me(psn.alt_ra * 15.0, psn.az_dec); // dec converted to degrees
+  Skymap.DateTime(myYear, myMonth, myDay, hh);
+  Skymap.my_location(mylatitude , mylongitude);
+  Skymap.star_ra_dec(me);
+  Skymap.Calculate_all();
+  
+  return Skymap.IsVisible();
 }
 
 double CelestialGotoObject::FNdegmin(double xx)
@@ -138,20 +133,21 @@ double CelestialGotoObject::FNdegmin(double xx)
 
 double CelestialGotoObject::dayno(int dx, int mx, int yx, double fx)
 {
+  /*
   Serial.print(dx);
   Serial.print(" ");
   Serial.print(mx);
   Serial.print(" ");
   Serial.println(yx);
- 
+ */
 //    dno = (367 * yx) - (int)(7 * (yx + (int)((mx + 9) / 12)) / 4) + (int)(275 * mx / 9) + dx - 730531.5 + fx;
 //    dno -= 4975.5;
 
     dno = (367.0 * yx) - (int)(7.0 * (yx + (int)((mx + 9.0) / 12.0)) / 4.0) + (int)(275.0 * mx / 9.0) + dx - 730531.5 + fx;
-    Serial.println(dno);
+    //Serial.println(dno);
     dno -= 4975.5;
-    Serial.print("day no ");
-    Serial.println(dno);
+    //Serial.print("day no ");
+    //Serial.println(dno);
     return dno;
 }
 
@@ -186,8 +182,8 @@ double CelestialGotoObject::fnatan(double x, double y)
 
 void CelestialGotoObject::earth()
 {
-    Serial.println("earth");
-    Serial.println(daynumber,6);
+    //Serial.println("earth");
+    //Serial.println(daynumber,6);
     M_e = ((n[3] * c_rads) * (daynumber)) + (L[3] - p[3]) * c_rads;
     //Serial.println(M_e,6);
     M_e = frange(M_e);

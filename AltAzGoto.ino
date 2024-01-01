@@ -9,16 +9,23 @@
 #include "devicetime.h"
 #include "CelestialDatabase.h"
 #include "IRremote.h"
+#include "AccelStepper.h"
 
-LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
-IRrecv irrecv(5);
-int remotekey[250];
+//                RS E  D4 D5  D6  D7
+LiquidCrystal lcd(5, 6, 7, 8, 9, 10);
+IRrecv irrecv(4);
+
+#define stepsPerRevolution 2038
+
+AccelStepper AzStepper(AccelStepper::DRIVER,14,15); // A0, A1 
+AccelStepper AltStepper(AccelStepper::DRIVER,16,16); // A2, A3
 
 int currentAction;
 CelestialDatabase cdb;
 String celestialObjectID = "";
-CelestialGotoObject* targetObject;
-AltAzPosition targetPosition;
+CelestialGotoObject targetObject;
+SkyPosition targetPosition;
+SkyPosition currentPosition;
 
 // status codes
  #define INACTIVE -1
@@ -44,11 +51,24 @@ byte rarrow[8] = {
 
 void setup() {
   Serial.begin(115200);
+  currentPosition.alt_ra = 0.0;
+  currentPosition.az_dec = 0.0;
+  targetPosition.alt_ra = 0.0;
+  targetPosition.az_dec = 0.0;
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
-
   irrecv.enableIRIn();
+
+  // position zero is alt = 90, az = latitude (so fork horiontal, tube at right angles)
+  AzStepper.setMaxSpeed(200.0);
+  AzStepper.setAcceleration(100.0);
+  AzStepper.setCurrentPosition(0);
+  
+  AzStepper.setMaxSpeed(300.0);
+  AzStepper.setAcceleration(100.0);
+  AzStepper.setCurrentPosition(0);
 }
+
 
 int getNumberKey(int cmd)
 {
@@ -66,13 +86,14 @@ int getNumberKey(int cmd)
 }
 
 void loop() {
+  
   while (irrecv.decode()) {
-//      Serial.println(irrecv.decodedIRData.command);
+      //Serial.println(irrecv.decodedIRData.command);
       switch (irrecv.decodedIRData.command) {
         case key_play:
           if (currentAction == LOOKUP)
           {
-            targetPosition = targetObject->getCurrentAltAzPosition(getHour(), getMinute());
+            targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
             currentAction = SLEWING;
           }
           else {
@@ -144,26 +165,38 @@ void loop() {
                 lcd.print(celestialObjectID);
                 if (celestialObjectID.length() == 4) {
                   lcd.clear();
-                  targetObject = cdb.getCelestialGotoObject(celestialObjectID);
-                  if (!targetObject)
+                  if (cdb.FindCelestialGotoObject(celestialObjectID, &targetObject))
+                  {
+                    if (!targetObject.isAboveHorizon(getHour(), getMinute()))
+                    {
+                      lcd.print("error - object");
+                      lcd.setCursor(0,1);
+                      lcd.print("below horizon");
+                      currentAction = INACTIVE;
+                    }
+                    else {
+                      lcd.print(targetObject.name);
+                      lcd.setCursor(0,1);
+                      lcd.write(byte(0));
+                      lcd.print(" or C to cancel");
+                      currentAction = LOOKUP;
+                    }
+                  }
+                  else
                   {
                     lcd.print("error finding");
                     lcd.setCursor(0,1);
                     lcd.print("object " + celestialObjectID);
                     celestialObjectID = "";
                     currentAction = INACTIVE;
-                  } else {
-                    lcd.print(targetObject->name);
-                    lcd.setCursor(0,1);
-                    lcd.write(byte(0));
-                    lcd.print(" or C to cancel");
-                    currentAction = LOOKUP;
-                  }
+                  } 
                 }
               }
           break;
       }
-    irrecv.resume(); 
+      // slight delay to avoid unintentional duplicate key presses
+      delay(100);
+    irrecv.resume();
   }
 
   // state machine actions
