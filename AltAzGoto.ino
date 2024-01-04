@@ -49,8 +49,8 @@ byte rarrow[8] = {
 };
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("go");
+  //Serial.begin(9600);
+  //Serial.println("go");
   currentPosition.alt = 0.0;
   currentPosition.az = 0.0;
   targetPosition.alt = 0.0;
@@ -60,7 +60,6 @@ void setup() {
   irrecv.enableIRIn();
   calibrating = false;
   motors.init();
-
 }
 
 
@@ -82,7 +81,7 @@ int getNumberKey(int cmd)
 void loop() {
   
   while (irrecv.decode()) {
-    Serial.println(irrecv.decodedIRData.command);
+    //Serial.println(irrecv.decodedIRData.command);
     switch (irrecv.decodedIRData.command) {
       case key_play:
         if (currentAction == LOOKUP)
@@ -175,7 +174,7 @@ void loop() {
               lcd.print(celestialObjectID);
               if (celestialObjectID.length() == 4) {
                 lcd.clear();
-                if (cdb.FindCelestialGotoObject(celestialObjectID, &targetObject))
+                if (cdb.FindCelestialGotoObject(celestialObjectID.toInt(), &targetObject))
                 {
                   if (!targetObject.isAboveHorizon(getHour(), getMinute()))
                   {
@@ -225,22 +224,22 @@ void loop() {
     case key_up:
       motors.Move(1,0,0,calibrating); // alt az cal
       currentAction = INACTIVE;
-      Serial.println("moveaction");
+      //Serial.println("moveaction");
       break;
     case key_down:
       motors.Move(-1,0,0,calibrating);
       currentAction = INACTIVE;
-      Serial.println("moveaction");
+      //Serial.println("moveaction");
       break;
     case key_left:
       motors.Move(0,-1,0,calibrating);
       currentAction = INACTIVE;
-      Serial.println("moveaction");
+      //Serial.println("moveaction");
       break;
     case key_right:
       motors.Move(0,1,0,calibrating);
       currentAction = INACTIVE;
-      Serial.println("moveaction");
+      //Serial.println("moveaction");
       break;
     case TRACKING:
       // tracking

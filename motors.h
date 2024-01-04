@@ -9,7 +9,6 @@ class stepperMotors
 
   void init()
   {
-
     azfullcirclesteps = 200 * 32;
     altfullcirclesteps = 200 * 32;
     moveamount = 0;

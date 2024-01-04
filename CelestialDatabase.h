@@ -4,15 +4,26 @@
 // Celestial Database
 #include "Arduino.h"
 
+#define c_rads 0.01745329251994329576923690768489
+#define c_degs 57.295779513082320876798154814105
+#define pi 3.1415926535897932384626433832795
+
+#define mylatitude 52.6027972
+#define mylongitude -3.0954659
+
+#define myYear 2024
+#define myMonth 4
+#define myDay  1
+
 struct AltAzPosition
 {
-  double alt;
-  double az;  
+  float alt;
+  float az;  
 };
 struct RaDecPosition
 {
-  double ra;
-  double dec;  
+  float ra;
+  float dec;  
 };
 class CelestialGotoObject {
   public:
@@ -32,21 +43,18 @@ class CelestialGotoObject {
     String id;
     String name;
 
-    int RA_hour;
-    int RA_minute;
-    //int decSign;
-    int DEC_hour;
-    int DEC_minute;
+    float rightascension;
+    float declination;
 
     bool isPlanet;
 private:
-    const static double i[10];
-    const static double o[10];
-    const static double p[10];
-    const static double a[10];
-    const static double n[10];
-    const static double e[10];
-    const static double L[10];
+    const static float i[10];
+    const static float o[10];
+    const static float p[10];
+    const static float a[10];
+    const static float n[10];
+    const static float e[10];
+    const static float L[10];
 
     double M, v, r, x, y, z, X, Y, Z, Xq, Yq, Zq;
     double ra, dec;
@@ -54,22 +62,14 @@ private:
     double Xq_e, Yq_e, Zq_e, ra_e, dec_e;
     double daynumber, dfrac, dno;
     int dd, mm, yy, hh, mu;
-    double pi;
-    double c_rads;
-    double c_degs;
 
-    double mylatitude = 52.6027972;
-    double mylongitude = -3.0954659;
-    double myYear = 2024;
-    double myMonth = 1;
-    double myDay = 1;
 };
   
 class CelestialDatabase 
 {
   public:
 
-    bool FindCelestialGotoObject(String ID, CelestialGotoObject* obj); 
+    bool FindCelestialGotoObject(int ID, CelestialGotoObject* obj); 
 };
 
 #endif // celestialdatabase_h
