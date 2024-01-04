@@ -5,17 +5,25 @@ This is a work in progress!
 This is Arduino code to select a celestial object and automatically move the telescope to point to it.
 Hardware required is:
 * arduino UNO board
-* two 2phase stepper motors
-* two DRV8825 stepper drivers
-* arduino SD-card module
+* two 2phase stepper motors (in my case nema17 42A02C)
+* two DRV8825 stepper drivers + driver extension shields
+* arduino SD-card module + 2GB SD card
 * LCD display
+* potentiometer to adjust LCD brightness
 * IR remote and receiver
+* microswitch to prevent slewing past horizon
 
-Current status of code: user can set time on board, enter an ID of object, select to slew, select to move, select to track, and current Alt-Az coordinates calculated for both stars and planets.
+The database of celestial objects contains all NGC objects, about 450 major stars, and planets (incuding pluto, not that you'll be able to see it).
+
+Current status of code: functionally complete, but untested. Some hardcoded stuff that needs finessing (such as current date, stepper calibration with gears). Program space is just squeezing onto an arduino Uno R3, so not much wriggle room left to add more functionality, unless I relent and buy a arduino mega for a couple more quid!
 
 Todo: 
-* Implement list of celestial objects on SD card
-* drive stepper motors:
-  * slewing
-  * tracking
-  * manual moving
+* match motor parameters to real life gears
+* allow entry of date using IR remote
+* bug test
+* bug test
+* bug test
+* slew so focusser is always facing up
+* track without doing crazy 180 degree spins of the azimuth
+
+Current status of hardware - I've come to realise how much gearing is required to get sub-arcsecond tracking, and without buying some more stuff it looks like I'll be settling for decent visual tracking, and leave astrophotography for another day....
