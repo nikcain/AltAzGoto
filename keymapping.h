@@ -53,10 +53,9 @@
 #define key_down 152
 #define key_volup 70
 #define key_voldown 21
-#define key_eq 25
-// used for back #define key_rpt 13
-#define key_power 19
-#define key_cancel 162
+#define key_calibrate 25
+#define key_power 162
+#define key_cancel 176
 
 #endif // WOKWI
 

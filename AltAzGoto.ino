@@ -35,6 +35,7 @@ stepperMotors motors;
 #define SETHOUR 23
 #define SETMINUTE 24
 #define SETSECONDS 25
+#define PACKAWAY 26
 
 // image for play arrow
 byte rarrow[8] = {
@@ -48,7 +49,8 @@ byte rarrow[8] = {
 };
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
+  Serial.println("go");
   currentPosition.alt = 0.0;
   currentPosition.az = 0.0;
   targetPosition.alt = 0.0;
@@ -57,7 +59,7 @@ void setup() {
   lcd.createChar(0, rarrow);
   irrecv.enableIRIn();
   calibrating = false;
-
+  motors.init();
 
 }
 
@@ -80,7 +82,7 @@ int getNumberKey(int cmd)
 void loop() {
   
   while (irrecv.decode()) {
-    //Serial.println(irrecv.decodedIRData.command);
+    Serial.println(irrecv.decodedIRData.command);
     switch (irrecv.decodedIRData.command) {
       case key_play:
         if (currentAction == LOOKUP)
@@ -136,7 +138,6 @@ void loop() {
           break;
         }
         lcd.clear();
-        lcd.print("moving");
         currentAction = irrecv.decodedIRData.command;
         break;
       case key_back:
@@ -161,6 +162,10 @@ void loop() {
           lcd.clear();
           lcd.print("Calibrating mode on");
         }
+        break;
+      case key_power:
+        // sets position to vertical up, az pointing north
+        currentAction = PACKAWAY;
         break;
       default:
         if (getNumberKey(irrecv.decodedIRData.command) > -1) 
@@ -216,18 +221,26 @@ void loop() {
       // slewing to object
       if (motors.completedSlew()) currentAction = INACTIVE;
       break;
-    // manual move
+    // manual move. Values for direction, not steps (motors will handle amounts)
     case key_up:
-      motors.Move(10,0,calibrating); // alt az cal
+      motors.Move(1,0,0,calibrating); // alt az cal
+      currentAction = INACTIVE;
+      Serial.println("moveaction");
       break;
     case key_down:
-      motors.Move(-10,0,calibrating);
+      motors.Move(-1,0,0,calibrating);
+      currentAction = INACTIVE;
+      Serial.println("moveaction");
       break;
     case key_left:
-      motors.Move(0,-10,calibrating);
+      motors.Move(0,-1,0,calibrating);
+      currentAction = INACTIVE;
+      Serial.println("moveaction");
       break;
     case key_right:
-      motors.Move(0,10,calibrating);
+      motors.Move(0,1,0,calibrating);
+      currentAction = INACTIVE;
+      Serial.println("moveaction");
       break;
     case TRACKING:
       // tracking
@@ -240,8 +253,12 @@ void loop() {
           lcd.setCursor(0,0);
           lcd.print(getTimeString());
           break;
+    case PACKAWAY:
+        motors.setTarget(90,0);
+    break;
     default:
       break;
   }
+  motors.update();
 }
 
