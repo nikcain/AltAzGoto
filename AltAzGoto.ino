@@ -20,7 +20,7 @@ CelestialDatabase cdb;
 String celestialObjectID = "";
 CelestialGotoObject targetObject;
 AltAzPosition targetPosition;
-AltAzPosition currentPosition;
+//AltAzPosition currentPosition;
 bool calibrating = false;
 stepperMotors motors;
 
@@ -32,9 +32,8 @@ stepperMotors motors;
 //object found, waiting confirmation to slew
 #define READYTOGO 21
 #define SLEWING 22
-#define SETHOUR 23
-#define SETMINUTE 24
-#define SETSECONDS 25
+#define SETTIME 23
+#define MOVING 24
 #define PACKAWAY 26
 
 // image for play arrow
@@ -48,18 +47,22 @@ byte rarrow[8] = {
   B10000,
 };
 
+
+  int updown = 0;
+  int leftright = 0;
+  int datetimeitembeingedited = 0;
+
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   //Serial.println("go");
-  currentPosition.alt = 0.0;
-  currentPosition.az = 0.0;
-  targetPosition.alt = 0.0;
-  targetPosition.az = 0.0;
+                
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
   irrecv.enableIRIn();
   calibrating = false;
   motors.init();
+  lcd.noCursor();
+  lcd.noBlink();
 }
 
 
@@ -79,11 +82,11 @@ int getNumberKey(int cmd)
 }
 
 void loop() {
-  
   while (irrecv.decode()) {
     //Serial.println(irrecv.decodedIRData.command);
     switch (irrecv.decodedIRData.command) {
       case key_play:
+        lcd.clear();
         if (currentAction == LOOKUP)
         {
           targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
@@ -91,53 +94,21 @@ void loop() {
           currentAction = SLEWING;
         }
         else {
-          lcd.clear();
           lcd.print((currentAction == TRACKING) ? "stopped" : "tracking");
           currentAction = (currentAction == TRACKING) ? INACTIVE : TRACKING;
         }
         break;
       case key_up:
-        if (currentAction == SETHOUR) {
-            setDeviceTime(getHour()+1, getMinute(), getSeconds());
-            break;
-          }
-
-        if (currentAction == SETMINUTE) {
-            setDeviceTime(getHour(), getMinute()+1, getSeconds());
-            break;
-          }
-
-        if (currentAction == SETSECONDS) {
-            setDeviceTime(getHour(), getMinute(), getSeconds()+1);
-            break;
-          }
+        updown = 1;
+        break;
       case key_down:
-        if (currentAction == SETHOUR) {
-            setDeviceTime(getHour()-1, getMinute(), getSeconds());
-            break;
-          }
-          if (currentAction == SETMINUTE) {
-            setDeviceTime(getHour(), getMinute()-1, getSeconds());
-            break;
-          }
-          if (currentAction == SETSECONDS) {
-            setDeviceTime(getHour(), getMinute(), getSeconds()-1);
-            break;
-          }
+        updown = -1;
+        break;
       case key_left:
-        if (currentAction == SETHOUR) { currentAction = -1; lcd.clear(); break; }
-        if (currentAction == SETMINUTE || currentAction == SETSECONDS) {
-          currentAction--;
-          break;
-        }
+        leftright = -1;
+        break;
       case key_right:
-        if (currentAction == SETSECONDS) { currentAction = -1; lcd.clear(); break; }
-        if (currentAction == SETHOUR || currentAction == SETMINUTE) {
-          currentAction++;
-          break;
-        }
-        lcd.clear();
-        currentAction = irrecv.decodedIRData.command;
+        leftright = 1;
         break;
       case key_back:
         // delete celestialObjectID character
@@ -146,9 +117,9 @@ void loop() {
         lcd.print(celestialObjectID);
         break;
       case key_menu:
+        datetimeitembeingedited = 0;
+        currentAction = SETTIME;
         lcd.clear();
-        lcd.print(getTimeString());
-        currentAction = SETHOUR;
         break;
       case key_calibrate:
         if (calibrating) {
@@ -171,13 +142,14 @@ void loop() {
             {
               celestialObjectID.concat(getNumberKey(irrecv.decodedIRData.command));
               lcd.clear();
+              lcd.noCursor();
               lcd.print(celestialObjectID);
               if (celestialObjectID.length() == 4) {
-                lcd.clear();
                 if (cdb.FindCelestialGotoObject(celestialObjectID.toInt(), &targetObject))
                 {
                   if (!targetObject.isAboveHorizon(getHour(), getMinute()))
                   {
+                    lcd.clear();
                     lcd.print("error - object");
                     lcd.setCursor(0,1);
                     lcd.print("below horizon");
@@ -199,12 +171,14 @@ void loop() {
                   celestialObjectID = "";
                   currentAction = INACTIVE;
                 } 
+                celestialObjectID = "";
               }
+              //lcd.cursor();
             }
         break;
     }
     // slight delay to avoid unintentional duplicate key presses
-    delay(100);
+    //delay(100);
     irrecv.resume();
   }
 
@@ -221,23 +195,8 @@ void loop() {
       if (motors.completedSlew()) currentAction = INACTIVE;
       break;
     // manual move. Values for direction, not steps (motors will handle amounts)
-    case key_up:
-      motors.Move(1,0,0,calibrating); // alt az cal
-      currentAction = INACTIVE;
-      //Serial.println("moveaction");
-      break;
-    case key_down:
-      motors.Move(-1,0,0,calibrating);
-      currentAction = INACTIVE;
-      //Serial.println("moveaction");
-      break;
-    case key_left:
-      motors.Move(0,-1,0,calibrating);
-      currentAction = INACTIVE;
-      //Serial.println("moveaction");
-      break;
-    case key_right:
-      motors.Move(0,1,0,calibrating);
+    case MOVING:
+      motors.Move(updown,leftright,0,calibrating); // alt az cal
       currentAction = INACTIVE;
       //Serial.println("moveaction");
       break;
@@ -246,12 +205,33 @@ void loop() {
       targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
       motors.setTarget(targetPosition.alt, targetPosition.az);
       break;
-    case SETHOUR:
-    case SETMINUTE:
-    case SETSECONDS:
-          lcd.setCursor(0,0);
-          lcd.print(getTimeString());
-          break;
+    case SETTIME:
+      
+        if (updown != 0) {
+          setDeviceTime(  getYear()+(updown * ((datetimeitembeingedited == 2)? 1:0)), 
+                        getMonth()+(updown * ((datetimeitembeingedited == 1)? 1:0)), 
+                        getDay()+(updown * ((datetimeitembeingedited == 0)? 1:0)),
+                        getHour()+(updown * ((datetimeitembeingedited == 3)? 1:0)), 
+                        getMinute()+(updown * ((datetimeitembeingedited == 4)? 1:0)), 
+                        getSeconds()+(updown * ((datetimeitembeingedited == 5)? 1:0)));
+          updown = 0;
+        }
+        if (leftright != 0) {
+          datetimeitembeingedited += leftright;
+          if (datetimeitembeingedited < 0) datetimeitembeingedited = 0;
+          if (datetimeitembeingedited > 5) { lcd.noCursor(); lcd.clear(); currentAction = INACTIVE; break; }
+          leftright = 0;
+        }
+
+        lcd.noCursor();
+        lcd.setCursor(0,0);
+        lcd.print(getDateString());
+        lcd.setCursor(0,1);
+        lcd.print(getTimeString());
+        lcd.setCursor(1+datetimeitembeingedited % 3 * 3,(datetimeitembeingedited > 2)?1:0);
+        lcd.cursor();
+        delay(200);
+        break;
     case PACKAWAY:
         motors.setTarget(90,0);
     break;

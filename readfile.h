@@ -18,7 +18,8 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
   // DEC
   // Name
 
-  String filename = String(id) + ".txt";
+  String path = String((int)(id/500)*500) + "-" + String((int)(id/500)*500+499); //31300
+  String filename = path + "/" + String(id) + ".txt";
   if (id > 9000) obj->isPlanet = true;
 
   char buf[32];

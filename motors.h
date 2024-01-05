@@ -3,18 +3,17 @@
 
 #include <AccelStepper.h>
 
+#define maxmoveamount 100
+#define azfullcirclesteps 6400
+#define altfullcirclesteps 6400
+
 class stepperMotors 
 {
   public:
 
   void init()
   {
-    azfullcirclesteps = 200 * 32;
-    altfullcirclesteps = 200 * 32;
-    moveamount = 0;
-    maxmoveamount = 500;
-
-    // position zero is alt = 0, az = 0 (so tube vertical, az base set to north
+    // position zero is alt = 90, az = 0 (so tube vertical, az base set to north
     // - this corresponds to storage position, so easier set up)
     // user starts the scope like this (using compasses, spirit levels etc), 
     // then does a goto to a known object. Once there, turn on calibrate mode,
@@ -30,6 +29,7 @@ class stepperMotors
     AltStepper->setAcceleration(100.0);
     AltStepper->setCurrentPosition(getStepsFordegrees(true, 90));
 
+    moveamount = 10;
   }
 
   void update()
@@ -64,14 +64,9 @@ class stepperMotors
   }
 
 private:
-  // steps to move the telescope a full circle (not full circle of motor)
-
   AccelStepper* AzStepper; 
   AccelStepper* AltStepper;
   int moveamount;
-  int maxmoveamount;
-  int azfullcirclesteps;
-  int altfullcirclesteps;
 };
 
 #endif // motors_h
