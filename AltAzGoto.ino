@@ -47,15 +47,13 @@ byte rarrow[8] = {
   B10000,
 };
 
+int updown = 0;
+int leftright = 0;
+int datetimeitembeingedited = 0;
 
-  int updown = 0;
-  int leftright = 0;
-  int datetimeitembeingedited = 0;
+void setup() {  
 
-void setup() {
-  Serial.begin(9600);
-  //Serial.println("go");
-                
+  //Serial.begin(9600);
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
   irrecv.enableIRIn();
@@ -89,7 +87,7 @@ void loop() {
         lcd.clear();
         if (currentAction == LOOKUP)
         {
-          targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
+          targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute());
           motors.setTarget(targetPosition.alt, targetPosition.az);
           currentAction = SLEWING;
         }
@@ -145,9 +143,9 @@ void loop() {
               lcd.noCursor();
               lcd.print(celestialObjectID);
               if (celestialObjectID.length() == 4) {
-                if (cdb.FindCelestialGotoObject(celestialObjectID.toInt(), &targetObject))
-                {
-                  if (!targetObject.isAboveHorizon(getHour(), getMinute()))
+                if (cdb.FindCelestialGotoObject(celestialObjectID.toInt(), &targetObject)) {
+                  targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0); 
+                  if (!targetObject.isAboveHorizon(getYear(), getMonth(), getDay(), getHour(), getMinute()))
                   {
                     lcd.clear();
                     lcd.print("error - object");
@@ -202,13 +200,13 @@ void loop() {
       break;
     case TRACKING:
       // tracking
-      targetPosition = targetObject.getCurrentAltAzPosition(getHour(), getMinute());
+      targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0);
       motors.setTarget(targetPosition.alt, targetPosition.az);
       break;
     case SETTIME:
       
         if (updown != 0) {
-          setDeviceTime(  getYear()+(updown * ((datetimeitembeingedited == 2)? 1:0)), 
+          setDeviceTime(  getYear()+(2000 +  updown * ((datetimeitembeingedited == 2)? 1:0)), 
                         getMonth()+(updown * ((datetimeitembeingedited == 1)? 1:0)), 
                         getDay()+(updown * ((datetimeitembeingedited == 0)? 1:0)),
                         getHour()+(updown * ((datetimeitembeingedited == 3)? 1:0)), 

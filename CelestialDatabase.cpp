@@ -3,13 +3,13 @@
 #include "readfile.h"
 #include "SkyMap.h"
 
-const float CelestialGotoObject::i[] = { 0.0, 7.0052, 3.3949, 0.0, 1.8496, 1.3033, 2.4869, 0.7728, 1.7692, 17.1695 };
-const float CelestialGotoObject::o[] = { 0.0, 48.493, 76.804, 0.0, 49.668, 100.629, 113.732, 73.989, 131.946, 110.469 };
-const float CelestialGotoObject::p[] = { 0.0, 77.669, 131.99, 103.147, 336.322, 14.556, 91.500,  169.602, 6.152, 223.486 };
-const float CelestialGotoObject::a[] = { 0.0, 0.387098, 0.723327, 1.0000, 1.523762, 5.20245, 9.52450, 19.1882, 29.9987, 39.2766 };
-const float CelestialGotoObject::n[] = { 0.0, 4.09235, 1.60215, 0.985611, 0.523998, 0.083099, 0.033551, 0.011733, 0.006002, 0.004006 };
-const float CelestialGotoObject::e[] = { 0.0, 0.205645 , 0.006769, 0.016679, 0.093346, 0.048892, 0.055724, 0.047874, 0.009816, 0.246211 };
-const float CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9625, 87.9728, 216.6279, 11.9756, 335.0233, 258.8717 };
+const double CelestialGotoObject::i[] = { 0.0, 7.0052, 3.3949, 0.0, 1.8496, 1.3033, 2.4869, 0.7728, 1.7692, 17.1695 };
+const double CelestialGotoObject::o[] = { 0.0, 48.493, 76.804, 0.0, 49.668, 100.629, 113.732, 73.989, 131.946, 110.469 };
+const double CelestialGotoObject::p[] = { 0.0, 77.669, 131.99, 103.147, 336.322, 14.556, 91.500,  169.602, 6.152, 223.486 };
+const double CelestialGotoObject::a[] = { 0.0, 0.387098, 0.723327, 1.0000, 1.523762, 5.20245, 9.52450, 19.1882, 29.9987, 39.2766 };
+const double CelestialGotoObject::n[] = { 0.0, 4.09235, 1.60215, 0.985611, 0.523998, 0.083099, 0.033551, 0.011733, 0.006002, 0.004006 };
+const double CelestialGotoObject::e[] = { 0.0, 0.205645 , 0.006769, 0.016679, 0.093346, 0.048892, 0.055724, 0.047874, 0.009816, 0.246211 };
+const double CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9625, 87.9728, 216.6279, 11.9756, 335.0233, 258.8717 };
 
 // planetary prediction from https://github.com/samhita-ganguly/Real-Time-Planet-Tracking-System-and-Trajectory-Prediction
 
@@ -25,11 +25,11 @@ CelestialGotoObject::CelestialGotoObject()
   isValid = false;
 }
 
-AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
+AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int myYear, int myMonth, int myDay, int hh, double mm)
 {
-  RaDecPosition radecpsn = getRaDec(hh, mm);
+  RaDecPosition radecpsn = getRaDec(myYear, myMonth, myDay, hh, mm);
   Star me(radecpsn.ra * 15.0, radecpsn.dec); // dec converted to degrees
-  Skymap.DateTime(myYear, myMonth, myDay, hh);
+  Skymap.DateTime(myYear, myMonth, myDay, (double)hh + mm/60.0);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
   Skymap.Calculate_all();
@@ -39,9 +39,8 @@ AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int hh, int mm)
   return psn;
 }
 
-RaDecPosition CelestialGotoObject::getRaDec(int hh, int mm)
+RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, int hh, double mm)
 {
-  //Serial.println(currTime);
   RaDecPosition psn;
   if (!isPlanet)
   {
@@ -101,9 +100,9 @@ RaDecPosition CelestialGotoObject::getRaDec(int hh, int mm)
   return psn; 
 }
 
-bool CelestialGotoObject::isAboveHorizon(int hh, int mm)
+bool CelestialGotoObject::isAboveHorizon(int myYear, int myMonth, int myDay, int hh, double mm)
 {
-  RaDecPosition psn = getRaDec(hh, mm);
+  RaDecPosition psn = getRaDec(myYear, myMonth, myDay, hh, mm);
   Star me(psn.ra * 15.0, psn.dec); // dec converted to degrees
   Skymap.DateTime(myYear, myMonth, myDay, hh);
   Skymap.my_location(mylatitude , mylongitude);

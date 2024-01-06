@@ -11,26 +11,22 @@
 #define mylatitude 52.6027972
 #define mylongitude -3.0954659
 
-#define myYear 2024
-#define myMonth 4
-#define myDay  1
-
 struct AltAzPosition
 {
-  float alt;
-  float az;  
+  double alt;
+  double az;  
 };
 struct RaDecPosition
 {
-  float ra;
-  float dec;  
+  double ra;
+  double dec;  
 };
 class CelestialGotoObject {
   public:
     CelestialGotoObject();
-    AltAzPosition getCurrentAltAzPosition(int hour, int minute);
-    RaDecPosition getRaDec(int hour, int minute);
-    bool isAboveHorizon(int hour, int minute);
+    AltAzPosition getCurrentAltAzPosition(int myYear, int myMonth, int myDay, int hour, double minute);
+    RaDecPosition getRaDec(int myYear, int myMonth, int myDay, int hour, double minute);
+    bool isAboveHorizon(int myYear, int myMonth, int myDay, int hour, double minute);
 
     bool isValid;
     double FNdegmin(double xx);
@@ -43,18 +39,18 @@ class CelestialGotoObject {
     String id;
     String name;
 
-    float rightascension;
-    float declination;
+    double rightascension;
+    double declination;
 
     bool isPlanet;
 private:
-    const static float i[10];
-    const static float o[10];
-    const static float p[10];
-    const static float a[10];
-    const static float n[10];
-    const static float e[10];
-    const static float L[10];
+    const static double i[10];
+    const static double o[10];
+    const static double p[10];
+    const static double a[10];
+    const static double n[10];
+    const static double e[10];
+    const static double L[10];
 
     double M, v, r, x, y, z, X, Y, Z, Xq, Yq, Zq;
     double ra, dec;

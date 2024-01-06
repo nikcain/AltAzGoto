@@ -3,7 +3,7 @@
 
 PetitSerial PS;
 // Use PetitSerial instead of Serial.
-//#define Serial PS
+#define Serial PS
 
 // The SD chip select pin is currently defined as 10
 // in pffArduino.h.  Edit pffArduino.h to change the CS pin.
@@ -17,16 +17,19 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
   // RA
   // DEC
   // Name
+  char i[2];
+  i[1] = 0;
+  i[0] = (int)(id/500)+ 65;
+  String filename = /*String(i) +*/ "C/" + String(id) + ".TXT";
+  Serial.println(filename);
 
-  String path = String((int)(id/500)*500) + "-" + String((int)(id/500)*500+499); //31300
-  String filename = path + "/" + String(id) + ".txt";
   if (id > 9000) obj->isPlanet = true;
 
   char buf[32];
   memset(buf, 0, 32);
   // Initialize SD and file system.
   FRESULT r = PF.begin(&fs);
-  if (PF.open(filename.c_str())) return false;
+  if (PF.open("/C/1111.TXT")) return false; //filename.c_str())) return false;
   
   UINT nr;
   if (PF.readFile(buf, sizeof(buf), &nr)) return false;
