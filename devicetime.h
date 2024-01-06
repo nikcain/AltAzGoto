@@ -2,7 +2,7 @@
 #define devicetime_h
 
 unsigned long timeoffset = 0;
-unsigned int year=24;
+unsigned int year=2024;
 unsigned int month = 1;
 unsigned int day = 6;
 
@@ -49,7 +49,7 @@ String getTimeString()
 String getDateString()
 {
   char buf1[10];
-  sprintf(buf1, "%02d/%02d/%02d",  day, month, year);
+  sprintf(buf1, "%02d/%02d/%04d",  day, month, year);
   return String(buf1);
 }
 

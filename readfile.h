@@ -10,11 +10,13 @@
 // #define _FS_FAT16	1	/* Enable FAT16 */
 // #define _FS_FAT32	0	/* Enable FAT32 */
 //
-// the worst part is finding a 2GB micro SD card! So 2000's!
+// the worst part is finding a 2GB micro SD card, and then being
+// restricted to 512 files per folder! So 2000's!
 // plus I'm not a wokwi member, so won't work here anyway, but I'll
 // keep this file up to date.
 
-#ifdef notwokwi
+#ifndef wokwi
+
 #include "PF.h"
 #include "PetitSerial.h"
 
@@ -38,7 +40,6 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
   i[1] = 0;
   i[0] = (int)(id/500)+ 65;
   String filename = /*String(i) +*/ "C/" + String(id) + ".TXT";
-  Serial.println(filename);
 
   if (id > 9000) obj->isPlanet = true;
 
@@ -46,7 +47,7 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
   memset(buf, 0, 32);
   // Initialize SD and file system.
   FRESULT r = PF.begin(&fs);
-  if (PF.open("/C/1111.TXT")) return false; //filename.c_str())) return false;
+  if (PF.open(filename.c_str())) return false;
   
   UINT nr;
   if (PF.readFile(buf, sizeof(buf), &nr)) return false;

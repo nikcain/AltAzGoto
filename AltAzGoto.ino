@@ -20,7 +20,6 @@ CelestialDatabase cdb;
 String celestialObjectID = "";
 CelestialGotoObject targetObject;
 AltAzPosition targetPosition;
-//AltAzPosition currentPosition;
 bool calibrating = false;
 stepperMotors motors;
 
@@ -37,7 +36,7 @@ stepperMotors motors;
 #define PACKAWAY 26
 
 // image for play arrow
-byte rarrow[8] = {
+const byte rarrow[8] = {
   B10000,
   B11000,
   B11100,
@@ -61,7 +60,6 @@ void setup() {
   lcd.noCursor();
   lcd.noBlink();
 }
-
 
 int getNumberKey(int cmd)
 {
@@ -103,16 +101,17 @@ void loop() {
         updown = (cmd == key_up) ? 1 : (cmd == key_down) ? -1 : 0;
         leftright = (cmd == key_left) ? -1 : (cmd == key_right) ? 1 : 0;
         if (currentAction != SETTIME) {
-          currentAction = MOVING;
           motors.Move(updown,leftright,0,calibrating); // alt az cal
           currentAction = INACTIVE;
         }
         break;
       case key_back:
         // delete celestialObjectID character
-        if (celestialObjectID.length() > 0) celestialObjectID = celestialObjectID.substring(0,celestialObjectID.length()-1);
-        lcd.clear();
-        lcd.print(celestialObjectID);
+        if (celestialObjectID.length() > 0) {
+          celestialObjectID = celestialObjectID.substring(0,celestialObjectID.length()-1);
+          lcd.clear();
+          lcd.print(celestialObjectID);
+        }
         break;
       case key_menu:
         datetimeitembeingedited = 0;
@@ -171,47 +170,31 @@ void loop() {
                   lcd.print("error finding");
                   lcd.setCursor(0,1);
                   lcd.print("object " + celestialObjectID);
-                  celestialObjectID = "";
                   currentAction = INACTIVE;
                 } 
                 celestialObjectID = "";
               }
-              //lcd.cursor();
             }
         break;
     }
-    // slight delay to avoid unintentional duplicate key presses
-    //delay(100);
     irrecv.resume();
   }
 
   // state machine actions
   switch (currentAction) {
-    case LOOKUP:
-      // ready to look up object
-      break;
-    case READYTOGO:
-      // waiting confirmation to slew
-      break;
     case SLEWING:
       // slewing to object
       if (motors.completedSlew()) currentAction = INACTIVE;
       break;
     // manual move. Values for direction, not steps (motors will handle amounts)
-    case MOVING:
-      //motors.Move(updown,leftright,0,calibrating); // alt az cal
-      //currentAction = INACTIVE;
-      //Serial.println("moveaction");
-      break;
     case TRACKING:
       // tracking
-      targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0);
+      targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() + getSeconds()/60.0);
       motors.setTarget(targetPosition.alt, targetPosition.az);
       break;
     case SETTIME:
-      
         if (updown != 0) {
-          setDeviceTime(  getYear()+(2000 +  updown * ((datetimeitembeingedited == 2)? 1:0)), 
+          setDeviceTime(getYear()+(updown * ((datetimeitembeingedited == 2)? 1:0)), 
                         getMonth()+(updown * ((datetimeitembeingedited == 1)? 1:0)), 
                         getDay()+(updown * ((datetimeitembeingedited == 0)? 1:0)),
                         getHour()+(updown * ((datetimeitembeingedited == 3)? 1:0)), 

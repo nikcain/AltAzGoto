@@ -20,15 +20,14 @@ bool CelestialDatabase::FindCelestialGotoObject(int ID, CelestialGotoObject* obj
   return true;
 }
      
-CelestialGotoObject::CelestialGotoObject()
+CelestialGotoObject::CelestialGotoObject() : isValid(false)
 {
-  isValid = false;
 }
 
 AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int myYear, int myMonth, int myDay, int hh, double mm)
 {
   RaDecPosition radecpsn = getRaDec(myYear, myMonth, myDay, hh, mm);
-  Star me(radecpsn.ra * 15.0, radecpsn.dec); // dec converted to degrees
+  Star me(radecpsn.ra * 15.0, radecpsn.dec); 
   Skymap.DateTime(myYear, myMonth, myDay, (double)hh + mm/60.0);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
@@ -44,15 +43,12 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
   RaDecPosition psn;
   if (!isPlanet)
   {
-    psn.ra = rightascension;// (RA_hour < 0) ? RA_hour - RA_minute/60.0 : RA_hour + RA_minute/60.0;
-    psn.dec = declination; //(DEC_hour < 0) ? DEC_hour - DEC_minute/60.0 : DEC_hour + DEC_minute/60.0; 
+    psn.ra = rightascension;
+    psn.dec = declination;
   } 
   else {
     dfrac = (hh + (mm / 60.0)) / 24.0;
-    //Serial.print(F"dfrac ");
-    //Serial.println(dfrac);
     daynumber = dayno(myDay, myMonth, myYear, dfrac);
-    //Serial.println(daynumber,6);
     earth();
     int j=4;   // TODO set to planet num
 
@@ -73,37 +69,18 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
     Xq = X;
     Yq = (Y * cos(ec)) - (Z * sin(ec));
     Zq = (Y * sin(ec)) + (Z * cos(ec));
-#if DEBUG
-    //Serial.println("Heliocentric coordinates of planet : ");
-    
-    Serial.print(x_e,6);
-    Serial.print(",");
-    Serial.println(y_e,6);
 
-    Serial.print(x,6);
-    Serial.print(",");
-    Serial.print(y,6);
-    Serial.print(",");
-    Serial.println(z,6);
-    
-    Serial.print(Xq,6);
-    Serial.print(",");
-    Serial.print(Yq,6);
-    Serial.print(",");
-    Serial.println(Zq,6);
-#endif
     psn.ra = fnatan(Xq, Yq);
     psn.dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
   }
   
-  //Serial.println("alt: " + String(psn.alt) + "  az: " + String(psn.az));
   return psn; 
 }
 
 bool CelestialGotoObject::isAboveHorizon(int myYear, int myMonth, int myDay, int hh, double mm)
 {
   RaDecPosition psn = getRaDec(myYear, myMonth, myDay, hh, mm);
-  Star me(psn.ra * 15.0, psn.dec); // dec converted to degrees
+  Star me(psn.ra * 15.0, psn.dec); 
   Skymap.DateTime(myYear, myMonth, myDay, hh);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
@@ -128,21 +105,8 @@ double CelestialGotoObject::FNdegmin(double xx)
 
 double CelestialGotoObject::dayno(int dx, int mx, int yx, double fx)
 {
-  /*
-  Serial.print(dx);
-  Serial.print(" ");
-  Serial.print(mx);
-  Serial.print(" ");
-  Serial.println(yx);
- */
-//    dno = (367 * yx) - (int)(7 * (yx + (int)((mx + 9) / 12)) / 4) + (int)(275 * mx / 9) + dx - 730531.5 + fx;
-//    dno -= 4975.5;
-
     dno = (367.0 * yx) - (int)(7.0 * (yx + (int)((mx + 9.0) / 12.0)) / 4.0) + (int)(275.0 * mx / 9.0) + dx - 730531.5 + fx;
-    //Serial.println(dno);
     dno -= 4975.5;
-    //Serial.print("day no ");
-    //Serial.println(dno);
     return dno;
 }
 
@@ -177,22 +141,13 @@ double CelestialGotoObject::fnatan(double x, double y)
 
 void CelestialGotoObject::earth()
 {
-    //Serial.println("earth");
-    //Serial.println(daynumber,6);
     M_e = ((n[3] * c_rads) * (daynumber)) + (L[3] - p[3]) * c_rads;
-    //Serial.println(M_e,6);
     M_e = frange(M_e);
-    //Serial.println(M_e,6);
     v_e = fkep(M_e, e[3]);
-    //Serial.println(v_e,6);
     r_e = a[3] * ((1 - (pow(e[3], 2))) / (1 + (e[3] * cos(v_e))));
 
-    //Serial.println(r_e,6);
     x_e = r_e * cos(v_e + p[3] * c_rads);
-
-    //Serial.println(x_e,6);
     y_e = r_e * sin(v_e + p[3] * c_rads);
-    //Serial.println(y_e,6);
     z_e = 0;
 }
 
