@@ -47,6 +47,15 @@ class stepperMotors
   {
     moveamount = (continuouspress) ? moveamount * 2 : 1;
     if (moveamount > maxmoveamount) moveamount = maxmoveamount;
+    if (calibrate)
+    {
+      // to move while leaving the currentposition unchanged (i.e. fine tune
+      // what the scope thinks it's pointing at), we set the current position
+      // backwards, and then let it move back to what it thinks was the original
+      // viewpoint.
+      AltStepper->setCurrentPosition(AltStepper->currentPosition()-(altsteps*moveamount));
+      AzStepper->setCurrentPosition(AzStepper->currentPosition()-(azsteps*moveamount));
+    }
     AltStepper->moveTo(AltStepper->currentPosition() + altsteps*moveamount);
     AzStepper->moveTo(AzStepper->currentPosition() + azsteps*moveamount);
   }

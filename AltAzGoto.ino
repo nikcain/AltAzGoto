@@ -52,7 +52,6 @@ int leftright = 0;
 int datetimeitembeingedited = 0;
 
 void setup() {  
-
   //Serial.begin(9600);
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
@@ -82,7 +81,8 @@ int getNumberKey(int cmd)
 void loop() {
   while (irrecv.decode()) {
     //Serial.println(irrecv.decodedIRData.command);
-    switch (irrecv.decodedIRData.command) {
+    int cmd = irrecv.decodedIRData.command;
+    switch (cmd) {
       case key_play:
         lcd.clear();
         if (currentAction == LOOKUP)
@@ -97,16 +97,16 @@ void loop() {
         }
         break;
       case key_up:
-        updown = 1;
-        break;
       case key_down:
-        updown = -1;
-        break;
       case key_left:
-        leftright = -1;
-        break;
       case key_right:
-        leftright = 1;
+        updown = (cmd == key_up) ? 1 : (cmd == key_down) ? -1 : 0;
+        leftright = (cmd == key_left) ? -1 : (cmd == key_right) ? 1 : 0;
+        if (currentAction != SETTIME) {
+          currentAction = MOVING;
+          motors.Move(updown,leftright,0,calibrating); // alt az cal
+          currentAction = INACTIVE;
+        }
         break;
       case key_back:
         // delete celestialObjectID character
@@ -123,12 +123,16 @@ void loop() {
         if (calibrating) {
           calibrating = false;
           lcd.clear();
-          lcd.print("Calibrating mode off");
+          lcd.print("Calibrating mode");
+          lcd.setCursor(6,1);
+          lcd.print("off");
         }
         else {
           calibrating = true;
           lcd.clear();
-          lcd.print("Calibrating mode on");
+          lcd.print("Calibrating mode");
+          lcd.setCursor(7,1);
+          lcd.print("on");
         }
         break;
       case key_power:
@@ -145,9 +149,10 @@ void loop() {
               if (celestialObjectID.length() == 4) {
                 if (cdb.FindCelestialGotoObject(celestialObjectID.toInt(), &targetObject)) {
                   targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0); 
+                  
+                  lcd.clear();
                   if (!targetObject.isAboveHorizon(getYear(), getMonth(), getDay(), getHour(), getMinute()))
                   {
-                    lcd.clear();
                     lcd.print("error - object");
                     lcd.setCursor(0,1);
                     lcd.print("below horizon");
@@ -157,7 +162,7 @@ void loop() {
                     lcd.print(targetObject.name);
                     lcd.setCursor(0,1);
                     lcd.write(byte(0));
-                    lcd.print(" or C to cancel");
+                    lcd.print(" to go");
                     currentAction = LOOKUP;
                   }
                 }
@@ -194,8 +199,8 @@ void loop() {
       break;
     // manual move. Values for direction, not steps (motors will handle amounts)
     case MOVING:
-      motors.Move(updown,leftright,0,calibrating); // alt az cal
-      currentAction = INACTIVE;
+      //motors.Move(updown,leftright,0,calibrating); // alt az cal
+      //currentAction = INACTIVE;
       //Serial.println("moveaction");
       break;
     case TRACKING:

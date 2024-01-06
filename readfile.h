@@ -1,3 +1,20 @@
+// the sdfat library pushes the program size beyond the arduino Uno limit 
+// (probably ok for Mega), while petitfs will fit, and if the pffconf.h
+// is edited to restrict use to just reading files (which is all we need)
+// then it's even smaller:
+// #define	_USE_DIR	0	/* Enable pf_opendir() and pf_readdir() function */
+// #define	_USE_LSEEK	0	/* Enable pf_lseek() function */
+// #define	_USE_WRITE	0	/* Enable pf_write() function */
+//
+// #define _FS_FAT12	1	/* Enable FAT12 */
+// #define _FS_FAT16	1	/* Enable FAT16 */
+// #define _FS_FAT32	0	/* Enable FAT32 */
+//
+// the worst part is finding a 2GB micro SD card! So 2000's!
+// plus I'm not a wokwi member, so won't work here anyway, but I'll
+// keep this file up to date.
+
+#ifdef notwokwi
 #include "PF.h"
 #include "PetitSerial.h"
 
@@ -50,3 +67,21 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
   obj->isValid = true;
   return true;
 }
+
+#else
+// stub
+bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj) 
+{
+
+  obj->isPlanet = false;
+  obj->isValid = true;
+
+  // you can't be sirius!!
+  obj->name = "Sirius";
+  obj->rightascension = 6.7525;  // 6h45m9s
+  obj->declination = -16.72525;  // -16deg43'31''
+  
+  return true;
+}
+#endif
+
