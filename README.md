@@ -1,6 +1,6 @@
 # AltAzGoto
 
-This is a work in progress!
+This is a work in progress! Wokwi version is here: https://wokwi.com/projects/385207165869856769 
 
 This is Arduino code to select a celestial object and automatically move the telescope to point to it.
 Hardware required is:
