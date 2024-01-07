@@ -15,11 +15,10 @@ Hardware required is:
 
 The database of celestial objects contains all NGC objects, about 450 major stars, and planets (incuding pluto, not that you'll be able to see it).
 
-Current status of code: functionally complete, but untested. Some hardcoded stuff that needs finessing (such as current date, stepper calibration with gears). Program space is just squeezing onto an arduino Uno R3, so not much wriggle room left to add more functionality, unless I relent and buy a arduino mega for a couple more quid!
+Current status of code: functionally complete, but untested. Program space is just squeezing onto an arduino Uno R3 (97%), so not much wriggle room left to add more functionality, unless I relent and buy a arduino mega for a couple more quid!
 
 Todo: 
 * match motor parameters to real life gears
-* allow entry of date using IR remote
 * bug test
 * bug test
 * bug test
