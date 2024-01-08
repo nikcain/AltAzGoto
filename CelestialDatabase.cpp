@@ -15,9 +15,7 @@ const double CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9
 
 bool CelestialDatabase::FindCelestialGotoObject(int ID, CelestialGotoObject* obj)
 {
-  if (!FindCelestialObjectRecord(ID, obj)) return false;
-
-  return true;
+  return FindCelestialObjectRecord(ID, obj);
 }
      
 CelestialGotoObject::CelestialGotoObject() : isValid(false)

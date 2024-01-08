@@ -152,7 +152,8 @@ void loop() {
                   lcd.clear();
                   if (!targetObject.isAboveHorizon(getYear(), getMonth(), getDay(), getHour(), getMinute()))
                   {
-                    lcd.print("error - object");
+                    lcd.print("error - ");
+                    lcd.print(targetObject.name);
                     lcd.setCursor(0,1);
                     lcd.print("below horizon");
                     currentAction = INACTIVE;

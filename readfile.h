@@ -39,32 +39,34 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
   char i[2];
   i[1] = 0;
   i[0] = (int)(id/500)+ 65;
-  String filename = /*String(i) +*/ "C/" + String(id) + ".TXT";
-
+  String filename = String(i) + "/" + String(id) + ".TXT";
   if (id > 9000) obj->isPlanet = true;
 
-  char buf[32];
-  memset(buf, 0, 32);
+  char buf[64];
   // Initialize SD and file system.
-  FRESULT r = PF.begin(&fs);
+  if (PF.begin(&fs)) return false;
+
   if (PF.open(filename.c_str())) return false;
   
   UINT nr;
+  String txt = "";
+
+  memset(buf, 0, 64);
   if (PF.readFile(buf, sizeof(buf), &nr)) return false;
-  if (nr == 0) return false;
-  memset(buf, 0, 32);
-  if (PF.readFile(buf, sizeof(buf), &nr)) return false;
-  if (nr == 0) return false;
-  if (!obj->isPlanet) obj->rightascension = String(buf).toDouble();
-  memset(buf, 0, 32);
-  if (PF.readFile(buf, sizeof(buf), &nr)) return false;
-  if (nr == 0) return false;
-  if (!obj->isPlanet) obj->declination = String(buf).toDouble();
-  memset(buf, 0, 32);
-  if (PF.readFile(buf, sizeof(buf), &nr)) return false;
-  if (nr == 0) return false;
-  obj->name = buf;
-  
+  txt = String(buf);
+
+  int idx = txt.indexOf("\r\n");
+  int idx2 = txt.indexOf("\r\n", idx+1);
+
+  String val = txt.substring(idx+1, idx2);
+  obj->rightascension = val.toDouble();
+
+  idx = txt.indexOf("\r\n", idx2+1);
+  val = txt.substring(idx2+1, idx);
+  obj->declination = val.toDouble();
+
+  idx2 = txt.indexOf("\r\n", idx+1); 
+  obj->name = txt.substring(idx+2, idx2);
   obj->isValid = true;
   return true;
 }
