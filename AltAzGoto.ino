@@ -3,6 +3,9 @@
 // input commands
 // look up coordinates
 
+// required to keep program space usage low
+#define DECODE_NEC 
+
 #include "Arduino.h"
 #include "keymapping.h"
 #include "LiquidCrystal.h"
@@ -12,8 +15,8 @@
 #include "motors.h"
 
 //                RS E  D4 D5  D6  D7
-LiquidCrystal lcd(5, 6, 7, 8, 9, 10);
-IRrecv irrecv(4);
+LiquidCrystal lcd(10, 9, 7,6,5,4);//4, 5, 6, 7);
+IRrecv irrecv(8);
 
 int currentAction;
 CelestialDatabase cdb;
@@ -51,7 +54,8 @@ int leftright = 0;
 int datetimeitembeingedited = 0;
 
 void setup() {  
-  //Serial.begin(9600);
+  Serial.begin(9600);
+  //Serial.println("lets go!");
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
   irrecv.enableIRIn();
@@ -86,6 +90,9 @@ void loop() {
         if (currentAction == LOOKUP)
         {
           targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute());
+          //Serial.println("set target");
+          lcd.println(targetPosition.alt,5);
+          //Serial.println(targetPosition.az,5);
           motors.setTarget(targetPosition.alt, targetPosition.az);
           currentAction = SLEWING;
         }
@@ -146,7 +153,8 @@ void loop() {
               lcd.noCursor();
               lcd.print(celestialObjectID);
               if (celestialObjectID.length() == 4) {
-                if (cdb.FindCelestialGotoObject(celestialObjectID.toInt(), &targetObject)) {
+                targetObject.id = celestialObjectID.toInt();
+                if (cdb.FindCelestialGotoObject(&targetObject)) {
                   targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0); 
                   
                   lcd.clear();
@@ -178,6 +186,7 @@ void loop() {
             }
         break;
     }
+    delay(200);
     irrecv.resume();
   }
 

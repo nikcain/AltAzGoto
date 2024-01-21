@@ -29,24 +29,33 @@ PetitSerial PS;
 
 FATFS fs;     /* File system object */
 
-bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
+bool InitSDCard()
+{
+  // Initialize SD and file system.
+  return (FR_OK == PF.begin(&fs));
+}
+
+bool FindCelestialObjectRecord(CelestialGotoObject* obj)
 {
   // all files should be four lines:
   // NGC number
-  // RA
-  // DEC
+  // RA (not for planets)
+  // DEC (not for planets)
   // Name
+
   char i[2];
   i[1] = 0;
-  i[0] = (int)(id/500)+ 65;
-  String filename = String(i) + "/" + String(id) + ".TXT";
-  if (id > 9000) obj->isPlanet = true;
+  i[0] = (int)(obj->id/500)+ 65;
+  String filename = String(i) + "/" + String(obj->id) + ".TXT";
+  obj->isPlanet = (obj->id > 8999);
 
   char buf[64];
-  // Initialize SD and file system.
-  if (PF.begin(&fs)) return false;
 
-  if (PF.open(filename.c_str())) return false;
+  if (PF.open(filename.c_str())) { 
+    Serial.println(filename);
+    Serial.println("can't open");
+    return false; 
+  }
   
   UINT nr;
   String txt = "";
@@ -57,14 +66,18 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
 
   int idx = txt.indexOf("\r\n");
   int idx2 = txt.indexOf("\r\n", idx+1);
-
-  String val = txt.substring(idx+1, idx2);
-  obj->rightascension = val.toDouble();
-
+  String val;
+  if (obj->id < 9000) 
+  {
+    val = txt.substring(idx+1, idx2);
+    obj->rightascension = val.toDouble();
+  }
   idx = txt.indexOf("\r\n", idx2+1);
-  val = txt.substring(idx2+1, idx);
-  obj->declination = val.toDouble();
-
+  if (obj->id > 9000) 
+  {
+    val = txt.substring(idx2+1, idx);
+    obj->declination = val.toDouble();
+  }
   idx2 = txt.indexOf("\r\n", idx+1); 
   obj->name = txt.substring(idx+2, idx2);
   obj->isValid = true;
@@ -73,7 +86,7 @@ bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj)
 
 #else
 // stub
-bool FindCelestialObjectRecord(int id, CelestialGotoObject* obj) 
+bool FindCelestialObjectRecord(CelestialGotoObject* obj) 
 {
 
   obj->isPlanet = false;

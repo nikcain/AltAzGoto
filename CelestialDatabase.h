@@ -36,7 +36,7 @@ class CelestialGotoObject {
     double fnatan(double x, double y);
     void earth();
 
-    String id;
+    int id;
     String name;
 
     double rightascension;
@@ -64,8 +64,8 @@ private:
 class CelestialDatabase 
 {
   public:
-
-    bool FindCelestialGotoObject(int ID, CelestialGotoObject* obj); 
+    CelestialDatabase();
+    bool FindCelestialGotoObject(CelestialGotoObject* obj); 
 };
 
 #endif // celestialdatabase_h

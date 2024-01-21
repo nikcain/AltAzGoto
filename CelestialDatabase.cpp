@@ -13,9 +13,14 @@ const double CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9
 
 // planetary prediction from https://github.com/samhita-ganguly/Real-Time-Planet-Tracking-System-and-Trajectory-Prediction
 
-bool CelestialDatabase::FindCelestialGotoObject(int ID, CelestialGotoObject* obj)
+CelestialDatabase::CelestialDatabase()
 {
-  return FindCelestialObjectRecord(ID, obj);
+  InitSDCard(); 
+}
+
+bool CelestialDatabase::FindCelestialGotoObject(CelestialGotoObject* obj)
+{
+  return FindCelestialObjectRecord(obj);
 }
      
 CelestialGotoObject::CelestialGotoObject() : isValid(false)
@@ -48,7 +53,7 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
     dfrac = (hh + (mm / 60.0)) / 24.0;
     daynumber = dayno(myDay, myMonth, myYear, dfrac);
     earth();
-    int j=4;   // TODO set to planet num
+    int j=id-9000;
 
     M = (n[j] * c_rads * (daynumber)) + (L[j] - p[j]) * c_rads;
 
