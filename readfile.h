@@ -47,7 +47,6 @@ bool FindCelestialObjectRecord(CelestialGotoObject* obj)
   i[1] = 0;
   i[0] = (int)(obj->id/500)+ 65;
   String filename = String(i) + "/" + String(obj->id) + ".TXT";
-  obj->isPlanet = (obj->id > 8999);
 
   char buf[64];
 
@@ -67,13 +66,13 @@ bool FindCelestialObjectRecord(CelestialGotoObject* obj)
   int idx = txt.indexOf("\r\n");
   int idx2 = txt.indexOf("\r\n", idx+1);
   String val;
-  if (obj->id < 9000) 
+  if (obj->id < 9991) 
   {
     val = txt.substring(idx+1, idx2);
     obj->rightascension = val.toDouble();
   }
   idx = txt.indexOf("\r\n", idx2+1);
-  if (obj->id > 9000) 
+  if (obj->id > 9991) 
   {
     val = txt.substring(idx2+1, idx);
     obj->declination = val.toDouble();

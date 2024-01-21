@@ -53,7 +53,7 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
     dfrac = (hh + (mm / 60.0)) / 24.0;
     daynumber = dayno(myDay, myMonth, myYear, dfrac);
     earth();
-    int j=id-9000;
+    int j=id-9990;
 
     M = (n[j] * c_rads * (daynumber)) + (L[j] - p[j]) * c_rads;
 
