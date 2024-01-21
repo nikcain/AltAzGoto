@@ -13,9 +13,9 @@ Hardware required is:
 * IR remote and receiver
 * microswitch to prevent slewing past horizon
 
-The database of celestial objects contains all NGC objects, about 450 major stars, and planets (incuding pluto, not that you'll be able to see it).
+The database of celestial objects contains all NGC objects, about 450 major stars, and planets (incuding pluto, not that you'll be able to see it). The database uses the NGC number as the key, so if you enter 0224, you get NGC 224 (andromeda galaxy). NGC catalogue is 0001 to 7840, the planets are 9991 to 9999 (i.e. 9994 is mars), and major stars are 8000 to 8450. I've tried to add common names where possible (looks like there's bug when I generated the db as the star names didn't make it!).
 
-Current status of code: functionally complete, but untested. Program space is just squeezing onto an arduino Uno R3 (97%), so not much wriggle room left to add more functionality, unless I relent and buy a arduino mega for a couple more quid!
+Current status of code: functionally complete, and testing on-going. 
 
 Todo: 
 * match motor parameters to real life gears
