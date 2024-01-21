@@ -54,7 +54,7 @@ int leftright = 0;
 int datetimeitembeingedited = 0;
 
 void setup() {  
-  Serial.begin(9600);
+  //Serial.begin(9600);
   //Serial.println("lets go!");
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
@@ -91,13 +91,13 @@ void loop() {
         {
           targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute());
           //Serial.println("set target");
-          lcd.println(targetPosition.alt,5);
-          //Serial.println(targetPosition.az,5);
+          lcd.print(targetPosition.alt,5);
+          lcd.setCursor(0,1);
+          lcd.print(targetPosition.az,5);
           motors.setTarget(targetPosition.alt, targetPosition.az);
           currentAction = SLEWING;
         }
         else {
-          lcd.print((currentAction == TRACKING) ? "stopped" : "tracking");
           currentAction = (currentAction == TRACKING) ? INACTIVE : TRACKING;
         }
         break;
@@ -110,6 +110,8 @@ void loop() {
         if (currentAction != SETTIME) {
           motors.Move(updown,leftright,0,calibrating); // alt az cal
           currentAction = INACTIVE;
+          lcd.clear();
+          lcd.print("Moving");
         }
         break;
       case key_back:
@@ -194,13 +196,15 @@ void loop() {
   switch (currentAction) {
     case SLEWING:
       // slewing to object
-      if (motors.completedSlew()) currentAction = INACTIVE;
+      if (motors.completedSlew()) currentAction = TRACKING;
       break;
     // manual move. Values for direction, not steps (motors will handle amounts)
     case TRACKING:
       // tracking
       targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() + getSeconds()/60.0);
       motors.setTarget(targetPosition.alt, targetPosition.az);
+      lcd.clear();
+      lcd.print("Tracking");
       break;
     case SETTIME:
         if (updown != 0) {

@@ -43,6 +43,8 @@ bool FindCelestialObjectRecord(CelestialGotoObject* obj)
   // DEC (not for planets)
   // Name
 
+  obj->isPlanet = (obj->id > 9990);
+
   char i[2];
   i[1] = 0;
   i[0] = (int)(obj->id/500)+ 65;
@@ -51,8 +53,8 @@ bool FindCelestialObjectRecord(CelestialGotoObject* obj)
   char buf[64];
 
   if (PF.open(filename.c_str())) { 
-    Serial.println(filename);
-    Serial.println("can't open");
+    //Serial.println(filename);
+    //Serial.println("can't open");
     return false; 
   }
   
@@ -66,13 +68,13 @@ bool FindCelestialObjectRecord(CelestialGotoObject* obj)
   int idx = txt.indexOf("\r\n");
   int idx2 = txt.indexOf("\r\n", idx+1);
   String val;
-  if (obj->id < 9991) 
+  if (!obj->isPlanet) 
   {
     val = txt.substring(idx+1, idx2);
     obj->rightascension = val.toDouble();
   }
   idx = txt.indexOf("\r\n", idx2+1);
-  if (obj->id > 9991) 
+  if (!obj->isPlanet) 
   {
     val = txt.substring(idx2+1, idx);
     obj->declination = val.toDouble();

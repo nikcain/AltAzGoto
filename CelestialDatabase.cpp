@@ -30,7 +30,7 @@ CelestialGotoObject::CelestialGotoObject() : isValid(false)
 AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int myYear, int myMonth, int myDay, int hh, double mm)
 {
   RaDecPosition radecpsn = getRaDec(myYear, myMonth, myDay, hh, mm);
-  Star me(radecpsn.ra * 15.0, radecpsn.dec); 
+  Star me(radecpsn.ra, radecpsn.dec); 
   Skymap.DateTime(myYear, myMonth, myDay, (double)hh + mm/60.0);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
@@ -73,8 +73,11 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
     Yq = (Y * cos(ec)) - (Z * sin(ec));
     Zq = (Y * sin(ec)) + (Z * cos(ec));
 
-    psn.ra = fnatan(Xq, Yq);
-    psn.dec = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
+    double ra_ = fnatan(Xq, Yq);
+    double dec_ = atan(Zq / sqrt(pow(Xq, 2.0) + pow(Yq, 2.0)));
+
+    psn.ra = FNdegmin((ra_ * c_degs));
+    psn.dec = FNdegmin(dec_ * c_degs);
   }
   
   return psn; 
