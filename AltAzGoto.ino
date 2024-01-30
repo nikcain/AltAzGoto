@@ -3,6 +3,8 @@
 // input commands
 // look up coordinates
 
+// #define MYDEBUG
+
 // required to keep program space usage low
 #define DECODE_NEC 
 
@@ -15,7 +17,7 @@
 #include "motors.h"
 
 //                RS E  D4 D5  D6  D7
-LiquidCrystal lcd(10, 9, 7,6,5,4);//4, 5, 6, 7);
+LiquidCrystal lcd(10, 9, 7, 6, 5, 4);
 IRrecv irrecv(8);
 
 int currentAction;
@@ -54,8 +56,11 @@ int leftright = 0;
 int datetimeitembeingedited = 0;
 
 void setup() {  
-  //Serial.begin(9600);
-  //Serial.println("lets go!");
+  
+#ifdef MYDEBUG
+  Serial.begin(9600);
+  Serial.println("lets go!");
+#endif
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
   irrecv.enableIRIn();
@@ -63,6 +68,9 @@ void setup() {
   motors.init();
   lcd.noCursor();
   lcd.noBlink();
+  currentAction = INACTIVE;
+  lcd.setCursor(0,0);
+  lcd.print((cdb.mounted)?"Ready!":"SDCard not mounted");
 }
 
 int getNumberKey(int cmd)
@@ -82,7 +90,9 @@ int getNumberKey(int cmd)
 
 void loop() {
   while (irrecv.decode()) {
-    //Serial.println(irrecv.decodedIRData.command);
+#ifdef MYDEBUG
+    Serial.println(irrecv.decodedIRData.command);
+#endif
     int cmd = irrecv.decodedIRData.command;
     switch (cmd) {
       case key_play:
@@ -208,12 +218,12 @@ void loop() {
       break;
     case SETTIME:
         if (updown != 0) {
-          setDeviceTime(getYear()+(updown * ((datetimeitembeingedited == 2)? 1:0)), 
-                        getMonth()+(updown * ((datetimeitembeingedited == 1)? 1:0)), 
-                        getDay()+(updown * ((datetimeitembeingedited == 0)? 1:0)),
-                        getHour()+(updown * ((datetimeitembeingedited == 3)? 1:0)), 
+          setDeviceTime(getYear()+  (updown * ((datetimeitembeingedited == 2)? 1:0)), 
+                        getMonth()+ (updown * ((datetimeitembeingedited == 1)? 1:0)), 
+                        getDay()+   (updown * ((datetimeitembeingedited == 0)? 1:0)),
+                        getHour()+  (updown * ((datetimeitembeingedited == 3)? 1:0)), 
                         getMinute()+(updown * ((datetimeitembeingedited == 4)? 1:0)), 
-                        getSeconds()+(updown * ((datetimeitembeingedited == 5)? 1:0)));
+                      getSeconds()+ (updown * ((datetimeitembeingedited == 5)? 1:0)));
           updown = 0;
         }
         if (leftright != 0) {

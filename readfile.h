@@ -53,8 +53,8 @@ bool FindCelestialObjectRecord(CelestialGotoObject* obj)
   char buf[64];
 
   if (PF.open(filename.c_str())) { 
-    //Serial.println(filename);
-    //Serial.println("can't open");
+    Serial.println(filename);
+    Serial.println("can't open");
     return false; 
   }
   

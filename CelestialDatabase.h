@@ -66,6 +66,8 @@ class CelestialDatabase
   public:
     CelestialDatabase();
     bool FindCelestialGotoObject(CelestialGotoObject* obj); 
+
+    bool mounted;
 };
 
 #endif // celestialdatabase_h

@@ -15,7 +15,13 @@ const double CelestialGotoObject::L[] = { 0.0, 93.8725, 233.5729, 324.5489, 82.9
 
 CelestialDatabase::CelestialDatabase()
 {
-  InitSDCard(); 
+  mounted = InitSDCard();
+  if (!mounted) 
+  {
+#ifdef MYDEBUG
+    Serial.println("can't mount")
+#endif
+  }
 }
 
 bool CelestialDatabase::FindCelestialGotoObject(CelestialGotoObject* obj)
@@ -86,7 +92,7 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
 bool CelestialGotoObject::isAboveHorizon(int myYear, int myMonth, int myDay, int hh, double mm)
 {
   RaDecPosition psn = getRaDec(myYear, myMonth, myDay, hh, mm);
-  Star me(psn.ra * 15.0, psn.dec); 
+  Star me(psn.ra, psn.dec); 
   Skymap.DateTime(myYear, myMonth, myDay, hh);
   Skymap.my_location(mylatitude , mylongitude);
   Skymap.star_ra_dec(me);
