@@ -2,6 +2,8 @@
 #define keymapping_h
 
 #define LGREMOTE 1
+//#define ELEGOO 1
+//#define WOKWI 1
 
 #ifdef LGREMOTE
 

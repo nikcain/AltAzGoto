@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = 'build/arduino.avr.uno/AltAzGoto.ino.hex'
+elf = 'build/arduino.avr.uno/AltAzGoto.ino.elf'
+gdbServerPort=3333

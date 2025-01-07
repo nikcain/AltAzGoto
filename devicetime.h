@@ -3,8 +3,8 @@
 
 unsigned long timeoffset = 0;
 unsigned int year=2024;
-unsigned int month = 1;
-unsigned int day = 21;
+unsigned int month = 11;
+unsigned int day = 29;
 
 void setDeviceTime( unsigned int _year, unsigned int _month, unsigned int _day,
                     unsigned long _h, unsigned long _m, unsigned long _s)

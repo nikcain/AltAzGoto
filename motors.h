@@ -4,8 +4,11 @@
 #include <AccelStepper.h>
 
 #define maxmoveamount 100
-#define azfullcirclesteps 6400
-#define altfullcirclesteps 6400
+#define azfullcirclesteps -30975
+#define altfullcirclesteps 30975
+
+#define maxspeed 500
+#define acceleration 300
 
 class stepperMotors 
 {
@@ -20,13 +23,13 @@ class stepperMotors
     // manual move to center the object, and turn off calibrate mode (calibrate
     // mode simply doesn't update the stored current position during a manual move)
     AzStepper = new AccelStepper(AccelStepper::DRIVER, 14,15); // step A0, dir A1 
-    AzStepper->setMaxSpeed(500.0);
-    AzStepper->setAcceleration(100.0);
+    AzStepper->setMaxSpeed(maxspeed);
+    AzStepper->setAcceleration(acceleration);
     AzStepper->setCurrentPosition(0);
 
     AltStepper = new AccelStepper(AccelStepper::DRIVER, 16,17);    // step A2, dir A3
-    AltStepper->setMaxSpeed(500.0);
-    AltStepper->setAcceleration(100.0);
+    AltStepper->setMaxSpeed(maxspeed);
+    AltStepper->setAcceleration(acceleration);
     AltStepper->setCurrentPosition(getStepsFordegrees(true, 90));
 
     moveamount = 10;

@@ -21,6 +21,12 @@ CelestialDatabase::CelestialDatabase()
 #ifdef MYDEBUG
     Serial.println("can't mount")
 #endif
+
+    delay(1000);
+    mounted = InitSDCard();
+#ifdef MYDEBUG
+    Serial.println("can't mount attempt 2")
+#endif
   }
 }
 
@@ -44,6 +50,7 @@ AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int myYear, int myMon
   AltAzPosition psn;
   psn.alt = Skymap.get_star_Altitude();
   psn.az = Skymap.get_star_Azimuth();
+  if (psn.az > 180) psn.az = -1 * (360 - psn.az);
   return psn;
 }
 

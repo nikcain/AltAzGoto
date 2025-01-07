@@ -3,22 +3,21 @@
 // input commands
 // look up coordinates
 
-// #define MYDEBUG
+#define MYDEBUG
 
 // required to keep program space usage low
-#define DECODE_NEC 
+#define DECODE_NEC
 
 #include "Arduino.h"
 #include "keymapping.h"
 #include "LiquidCrystal.h"
 #include "devicetime.h"
 #include "CelestialDatabase.h"
-#include "IRremote.h"
+#include "IRremote.hpp"
 #include "motors.h"
 
 //                RS E  D4 D5  D6  D7
 LiquidCrystal lcd(10, 9, 7, 6, 5, 4);
-IRrecv irrecv(8);
 
 int currentAction;
 CelestialDatabase cdb;
@@ -63,7 +62,7 @@ void setup() {
 #endif
   lcd.begin(16, 2);
   lcd.createChar(0, rarrow);
-  irrecv.enableIRIn();
+  IrReceiver.begin(8);
   calibrating = false;
   motors.init();
   lcd.noCursor();
@@ -89,11 +88,12 @@ int getNumberKey(int cmd)
 }
 
 void loop() {
-  while (irrecv.decode()) {
+  while (IrReceiver.decode()) {
 #ifdef MYDEBUG
-    Serial.println(irrecv.decodedIRData.command);
+    Serial.println(IrReceiver.decodedIRData.command);
+    IrReceiver.printIRResultShort(&Serial);
 #endif
-    int cmd = irrecv.decodedIRData.command;
+    int cmd = IrReceiver.decodedIRData.command;
     switch (cmd) {
       case key_play:
         lcd.clear();
@@ -158,16 +158,16 @@ void loop() {
         currentAction = PACKAWAY;
         break;
       default:
-        if (getNumberKey(irrecv.decodedIRData.command) > -1) 
+        if (getNumberKey(IrReceiver.decodedIRData.command) > -1) 
             {
-              celestialObjectID.concat(getNumberKey(irrecv.decodedIRData.command));
+              celestialObjectID.concat(getNumberKey(IrReceiver.decodedIRData.command));
               lcd.clear();
               lcd.noCursor();
               lcd.print(celestialObjectID);
               if (celestialObjectID.length() == 4) {
                 targetObject.id = celestialObjectID.toInt();
                 if (cdb.FindCelestialGotoObject(&targetObject)) {
-                  targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0); 
+                  //targetPosition = targetObject.getCurrentAltAzPosition(getYear(), getMonth(), getDay(), getHour(), getMinute() +getSeconds()/60.0); 
                   
                   lcd.clear();
                   if (!targetObject.isAboveHorizon(getYear(), getMonth(), getDay(), getHour(), getMinute()))
@@ -199,7 +199,7 @@ void loop() {
         break;
     }
     delay(200);
-    irrecv.resume();
+    IrReceiver.resume();
   }
 
   // state machine actions
