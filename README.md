@@ -16,6 +16,26 @@ Hardware required is:
 The database of celestial objects contains all NGC objects, about 450 major stars, and planets (incuding pluto, not that you'll be able to see it). The database uses the NGC number as the key, so if you enter 0224, you get NGC 224 (andromeda galaxy). NGC catalogue is 0001 to 7840, the planets are 9991 to 9999 (i.e. 9994 is mars), and major stars are 8000 to 8450. I've tried to add common names where possible (looks like there's bug when I generated the db as the star names didn't make it!).
 
 Current status of code: functionally complete, and testing on-going. 
+pin|use||pin|use
+---|---|---|---|---
+0|||IOREF|test
+1|||RESET|
+2|||3.3V|
+3|||5V|
+4|LCD D7||GND|
+5|LCD D6||GND|
+6|LCD D5||Vin|
+|7|LCD D4||A0|Az step
+8|IRrecv||A1|Az dir
+9|LCD E||A2|Alt step
+|10|LCD RS||A3|Alt dir
+11|SDcard MOSI||A4|
+12|SDcard MISO||A5|
+|13|SDcard SCK|||
+|GND|SDcard CS|||
+|AREF|||
+|SDA|||
+|SCL|||
 
 Todo: 
 * match motor parameters to real life gears
