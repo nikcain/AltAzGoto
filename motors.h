@@ -5,7 +5,7 @@
 
 #define maxmoveamount 100
 #define azfullcirclesteps -30975
-#define altfullcirclesteps 30975
+#define altfullcirclesteps 30970
 
 #define maxspeed 500
 #define acceleration 300
