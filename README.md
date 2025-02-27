@@ -1,6 +1,6 @@
 # AltAzGoto
 
-I'm going to retire this project in favour of using an ESP32 processor instead. The advantages will be that I can network it, which will mean streamlining the code quite a lot, effectively allowing it to setting the date and time automatically, having the star & DSO catalog off-board, allow planetary calculations to also take place elsewhere, and no need for the LCD display (maybe). 
+I'm going to retire this project in favour of using an ESP32 processor instead. The advantages will be that I can network it, which will mean streamlining the code quite a lot, effectively allowing it to setting the date and time automatically, having the star & DSO catalog off-board, allow planetary calculations to also take place elsewhere, and no need for the LCD display (maybe). The new repository is here: https://github.com/nikcain/AltAzGoto-ESP32
 
 
 This is a work in progress! Wokwi version is here: https://wokwi.com/projects/385207165869856769 
