@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "CelestialDatabase.h"
-#include "readfile.h"
 #include "SkyMap.h"
+#include "readfile.h"
 
 const double CelestialGotoObject::i[] = { 0.0, 7.0052, 3.3949, 0.0, 1.8496, 1.3033, 2.4869, 0.7728, 1.7692, 17.1695 };
 const double CelestialGotoObject::o[] = { 0.0, 48.493, 76.804, 0.0, 49.668, 100.629, 113.732, 73.989, 131.946, 110.469 };
@@ -41,15 +41,34 @@ CelestialGotoObject::CelestialGotoObject() : isValid(false)
 
 AltAzPosition CelestialGotoObject::getCurrentAltAzPosition(int myYear, int myMonth, int myDay, int hh, double mm)
 {
+  SKYMAP_skymap_t skymap;
+  SKYMAP_observer_position_t observation_location; // observation location -- los angeles 
+  observation_location.latitude = mylatitude;
+  observation_location.longitude = mylongitude;
+  skymap.observer_position = observation_location;
+
   RaDecPosition radecpsn = getRaDec(myYear, myMonth, myDay, hh, mm);
-  Star me(radecpsn.ra, radecpsn.dec); 
-  Skymap.DateTime(myYear, myMonth, myDay, (double)hh + mm/60.0);
-  Skymap.my_location(mylatitude , mylongitude);
+  SKYMAP_star_t me;
+  me.right_ascension = radecpsn.ra;
+  me.declination = radecpsn.dec; 
+//  skymap.DateTime(myYear, myMonth, myDay, (double)hh + mm/60.0);
+  SKYMAP_date_time_values dt;
+  dt.year = myYear;
+  dt.month = myMonth;
+  dt.day = myDay;
+  dt.hour = (double)hh + mm/60.0;
+
+  skymap.date_time = dt;
+  
+  skymap.object_to_search = me;
+  SKYMAP_search_result_t search_result = SKYMAP_observe_object(&skymap);
+    /*
   Skymap.star_ra_dec(me);
   Skymap.Calculate_all();
+  */
   AltAzPosition psn;
-  psn.alt = Skymap.get_star_Altitude();
-  psn.az = Skymap.get_star_Azimuth();
+  psn.alt = search_result.altitude; //Skymap.get_star_Altitude();
+  psn.az = search_result.azimuth; //Skymap.get_star_Azimuth();
   if (psn.az > 180) psn.az = -1 * (360 - psn.az);
   return psn;
 }
@@ -98,14 +117,29 @@ RaDecPosition CelestialGotoObject::getRaDec(int myYear, int myMonth, int myDay, 
 
 bool CelestialGotoObject::isAboveHorizon(int myYear, int myMonth, int myDay, int hh, double mm)
 {
+  SKYMAP_skymap_t skymap;
+  SKYMAP_observer_position_t observation_location; // observation location -- los angeles 
+  observation_location.latitude = mylatitude;
+  observation_location.longitude = mylongitude;
+  skymap.observer_position = observation_location;
+
   RaDecPosition psn = getRaDec(myYear, myMonth, myDay, hh, mm);
-  Star me(psn.ra, psn.dec); 
-  Skymap.DateTime(myYear, myMonth, myDay, hh);
-  Skymap.my_location(mylatitude , mylongitude);
-  Skymap.star_ra_dec(me);
-  Skymap.Calculate_all();
   
-  return Skymap.IsVisible();
+  SKYMAP_star_t me;
+  me.right_ascension = psn.ra;
+  me.declination = psn.dec; 
+
+  SKYMAP_date_time_values dt;
+  dt.year = myYear;
+  dt.month = myMonth;
+  dt.day = myDay;
+  dt.hour = (double)hh + mm/60.0;
+  skymap.date_time = dt;
+  
+  skymap.object_to_search = me;
+  SKYMAP_search_result_t search_result = SKYMAP_observe_object(&skymap);
+  
+  return SKYMAP_is_object_visible(&search_result);
 }
 
 double CelestialGotoObject::FNdegmin(double xx)

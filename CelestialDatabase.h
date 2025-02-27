@@ -11,6 +11,7 @@
 #define mylatitude 52.6027972
 #define mylongitude -3.0954659
 
+
 struct AltAzPosition
 {
   double alt;
