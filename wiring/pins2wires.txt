@@ -1,0 +1,45 @@
+
+
+IOREF
+RESET
+3.3V
+5V			white
+GND
+GND			black
+ViN
+
+A0			blue		Az Step
+A1			purple		Az Direction
+A2			green		Alt Step
+A3			yellow		Alt Direction
+A4
+A5
+
+
+
+0
+1
+2
+3
+4			grey		LCD D7
+5			dark blue?	LCD D6
+6			blue		LCD D5
+7			green		LCD D4
+
+8			yellow		IR Receiver
+9			blue		LCD E
+10			grey		LCD RS
+11			grey		SD card DI?
+12			lt purple	SD card DO?
+13			green		SD card SCK?
+GND
+
+Motor 1 (Alt)
+Enable 		grey -> orange -> bb -> gnd
+Direction	purple -> yellow A3
+Step		blue -> green  A2
+
+Motor2 (Az)
+Enable		yellow -> grey -> bb -> gnd
+Direction	pink -> purple -> A1
+Step		brown -> blue -> A0

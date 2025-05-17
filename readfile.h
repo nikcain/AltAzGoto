@@ -27,7 +27,7 @@ PetitSerial PS;
 // The SD chip select pin is currently defined as 10
 // in pffArduino.h.  Edit pffArduino.h to change the CS pin.
 
-FATFS fs;     /* File system object */
+FATFS fs;     /* File systec:\Users\nik\OneDrive\Documents\Arduino\libraries\PF\src\pffArduino.hm object */
 
 bool InitSDCard()
 {
